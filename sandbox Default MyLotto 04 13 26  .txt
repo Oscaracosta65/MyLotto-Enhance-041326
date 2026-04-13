@@ -336,7 +336,7 @@ function mylottoexpertBuildBlendDisplayInfo($row, $settings)
     $skipText = mylottoexpertFormatPercentForLabel($skip);
     $primary = '';
     if ($strategyLabel !== '' && $aiText !== '') {
-        $primary = $strategyLabel . ' â€¢ AI ' . $aiText . '%';
+        $primary = $strategyLabel . ' • AI ' . $aiText . '%';
     } elseif ($strategyLabel !== '') {
         $primary = $strategyLabel;
     } elseif ($aiText !== '') {
@@ -426,6 +426,69 @@ function mylottoexpertBuildEuroMillionsLogoPath($gameName)
         'exists' => false,
         'alt'    => ($gameName !== '' ? $gameName : 'EuroMillions') . ' logo'
     );
+}
+
+function mylottoexpertIsMillionaireForLifeLottery($lotteryName, $gameId = '', $stateName = '')
+{
+    $lotteryKey = mylottoexpertNormalizeLotteryKey($lotteryName);
+    $gameKey    = mylottoexpertNormalizeLotteryKey($gameId);
+    $stateKey   = mylottoexpertNormalizeLotteryKey($stateName);
+    $combo      = trim($lotteryKey . ' ' . $gameKey . ' ' . $stateKey);
+
+    return (
+        strpos(' ' . $combo . ' ', ' millionaire for life ') !== false
+        || strpos(' ' . $combo . ' ', ' millionaire 4 life ') !== false
+        || strpos(' ' . $combo . ' ', ' millionaire4life ') !== false
+        || $lotteryKey === 'mfl'
+        || $gameKey === 'mfl'
+    );
+}
+
+function mylottoexpertResolveDisplayLocationMeta($stateName, $countryName, $lotteryName, $gameId = '')
+{
+    $stateName   = trim((string)$stateName);
+    $countryName = trim((string)$countryName);
+    $lotteryName = trim((string)$lotteryName);
+    $gameId      = trim((string)$gameId);
+
+    if (mylottoexpertIsEuroMillionsLottery($stateName, $lotteryName)) {
+        $countryName = 'Multi-Country';
+        $stateName   = '';
+    } elseif (mylottoexpertIsMillionaireForLifeLottery($lotteryName, $gameId, $stateName)) {
+        $countryName = 'Multi-State';
+        $stateName   = '';
+    }
+
+    return array(
+        'state'   => $stateName,
+        'country' => $countryName,
+        'lottery' => $lotteryName,
+        'game_id' => $gameId
+    );
+}
+
+function mylottoexpertBuildLotteryLocationParts($stateName, $countryName, $lotteryName = '', $gameId = '')
+{
+    $meta = mylottoexpertResolveDisplayLocationMeta($stateName, $countryName, $lotteryName, $gameId);
+    $parts = array();
+
+    if ($meta['country'] !== '') {
+        $parts[] = (string)$meta['country'];
+    }
+    if ($meta['state'] !== '' && strtolower((string)$meta['state']) !== 'lottery') {
+        $parts[] = (string)$meta['state'];
+    }
+    if ($meta['lottery'] !== '') {
+        $parts[] = (string)$meta['lottery'];
+    }
+
+    return $parts;
+}
+
+function mylottoexpertFormatLotteryLocationLine($stateName, $countryName, $lotteryName = '', $gameId = '', $separator = ' • ')
+{
+    $parts = mylottoexpertBuildLotteryLocationParts($stateName, $countryName, $lotteryName, $gameId);
+    return implode((string)$separator, $parts);
 }
 
 function mylottoexpertIsValidSavedLabel($label)
@@ -543,7 +606,7 @@ function mylottoexpertResolvePredictionTargetMeta($row)
         if ($ts !== false && $ts > 0) {
             $targetDrawDate = date('Y-m-d', $ts);
         } else {
-            // [FIX-LEGACY-DATE] Unparseable or pre-epoch date â†’ treat as absent so downstream
+            // [FIX-LEGACY-DATE] Unparseable or pre-epoch date → treat as absent so downstream
             // draw lookups receive an empty string rather than a garbage date.
             $targetDrawDate = '';
         }
@@ -1154,7 +1217,7 @@ function skaiEnsurePerformanceTableSchema($db)
  * Insert or update a performance record.
  * Uses UNIQUE KEY (user_id, run_id, draw_date, source) to prevent duplicates.
  * Including draw_date in the key means the same run can be scored once per draw
- * date â€” ensuring true historical accumulation across multiple draw cycles.
+ * date — ensuring true historical accumulation across multiple draw cycles.
  *
  * @param  object $db
  * @param  int    $userId
@@ -1317,8 +1380,8 @@ function skaiUpsertPerformanceRecord($db, $userId, array $data)
  * WHY THIS IS NECESSARY:
  * The original key `uq_user_run_source` only covered (user_id, run_id, source).
  * This meant that when the same saved prediction run was evaluated against a new
- * draw date, the INSERT â€¦ ON DUPLICATE KEY UPDATE silently overwrote the previous
- * performance record instead of appending a new one â€” breaking true historical
+ * draw date, the INSERT … ON DUPLICATE KEY UPDATE silently overwrote the previous
+ * performance record instead of appending a new one — breaking true historical
  * accumulation across multiple draw cycles.
  *
  * Adding `draw_date` to the key ensures each run produces exactly one record per
@@ -1341,7 +1404,7 @@ function skaiMigratePerformanceTableKeys($db)
     $prefix  = $db->getPrefix();
     $rawName = $prefix . 'skai_learning_performance';
 
-    // â”€â”€ Check whether the OLD key still exists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Check whether the OLD key still exists ────────────────────────────
     $oldKeyExists = false;
     try {
         $db->setQuery(
@@ -1355,7 +1418,7 @@ function skaiMigratePerformanceTableKeys($db)
         return false;
     }
 
-    // â”€â”€ Check whether the NEW key already exists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Check whether the NEW key already exists ──────────────────────────
     $newKeyExists = false;
     try {
         $db->setQuery(
@@ -1369,17 +1432,17 @@ function skaiMigratePerformanceTableKeys($db)
         return false;
     }
 
-    // â”€â”€ Drop the old key if present â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Drop the old key if present ───────────────────────────────────────
     if ($oldKeyExists) {
         try {
             $db->setQuery("ALTER TABLE `{$rawName}` DROP INDEX `uq_user_run_source`");
             $db->execute();
         } catch (Exception $e) {
-            // Ignore â€” may already have been removed by a parallel request
+            // Ignore — may already have been removed by a parallel request
         }
     }
 
-    // â”€â”€ Add the new key if not yet present â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Add the new key if not yet present ────────────────────────────────
     if (!$newKeyExists) {
         try {
             $db->setQuery(
@@ -1388,7 +1451,7 @@ function skaiMigratePerformanceTableKeys($db)
             );
             $db->execute();
         } catch (Exception $e) {
-            // Ignore â€” may already have been added by a parallel request
+            // Ignore — may already have been added by a parallel request
         }
     }
 
@@ -1607,11 +1670,11 @@ function skaiLpModStatus($count, $sampleCount)
  * Grade a single average-rank value into a performance tier.
  *
  * Grading scale (documented for auditability):
- *   1â€“5   â†’ Elite    (winning numbers appear in the very top predictions)
- *   6â€“10  â†’ Strong   (winning numbers near the top)
- *   11â€“20 â†’ Moderate (winning numbers in the middle range)
- *   21+   â†’ Weak     (winning numbers appear far down the list)
- *   null  â†’ Unknown
+ *   1–5   → Elite    (winning numbers appear in the very top predictions)
+ *   6–10  → Strong   (winning numbers near the top)
+ *   11–20 → Moderate (winning numbers in the middle range)
+ *   21+   → Weak     (winning numbers appear far down the list)
+ *   null  → Unknown
  *
  * @param  float|null $avgRank
  * @return array { grade, label, class }
@@ -1635,9 +1698,9 @@ function skaiLpGrade($avgRank)
  * Lower standard deviation = more consistent / predictable performance.
  *
  * Classification thresholds (documented):
- *   stddev < 3   â†’ High Consistency   (runs produce similar results)
- *   stddev < 7   â†’ Moderate           (some run-to-run variation)
- *   stddev >= 7  â†’ Volatile           (unpredictable swings)
+ *   stddev < 3   → High Consistency   (runs produce similar results)
+ *   stddev < 7   → Moderate           (some run-to-run variation)
+ *   stddev >= 7  → Volatile           (unpredictable swings)
  *
  * @param  array $records  Performance records (most-recent-first), each with 'avg_winning_rank'
  * @return array { level, label, description, stddev }
@@ -1666,7 +1729,7 @@ function skaiLpConsistency(array $records)
 
     // Consistency thresholds (named for auditability / easy tuning):
     //   High: stddev < 3 rank positions  (tight, reliable output)
-    //   Moderate: stddev 3â€“7 rank positions (some run-to-run variation)
+    //   Moderate: stddev 3–7 rank positions (some run-to-run variation)
     //   Volatile: stddev >= 7 rank positions (unpredictable swings)
     $CONS_HIGH_THRESHOLD     = 3.0;
     $CONS_MODERATE_THRESHOLD = 7.0;
@@ -1700,10 +1763,10 @@ function skaiLpConsistency(array $records)
  *
  * Direction: improving / declining / flat / unknown
  * Strength classification based on absolute delta (documented):
- *   |delta| < 1.5  â†’ no meaningful change (flat)
- *   |delta| 1.5â€“4  â†’ Slight
- *   |delta| 4â€“8    â†’ Moderate
- *   |delta| >= 8   â†’ Strong
+ *   |delta| < 1.5  → no meaningful change (flat)
+ *   |delta| 1.5–4  → Slight
+ *   |delta| 4–8    → Moderate
+ *   |delta| >= 8   → Strong
  *
  * @param  float|null $delta  Positive = improving (rank decreased), negative = declining
  * @return array { direction, strength, label, arrow }
@@ -1722,8 +1785,8 @@ function skaiLpTrendIntelligence($delta)
 
     // Trend thresholds (named for auditability / easy tuning):
     //   Flat:     |delta| < 1.5  (within normal variance; no meaningful change)
-    //   Slight:   |delta| 1.5â€“4  (noticeable but modest shift)
-    //   Moderate: |delta| 4â€“8    (clear improvement or decline)
+    //   Slight:   |delta| 1.5–4  (noticeable but modest shift)
+    //   Moderate: |delta| 4–8    (clear improvement or decline)
     //   Strong:   |delta| >= 8   (large rank shift across periods)
     $TREND_FLAT_THRESHOLD     = 1.5;
     $TREND_SLIGHT_THRESHOLD   = 4.0;
@@ -1814,13 +1877,13 @@ function skaiLpBestRunStats(array $records)
     );
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// DUAL BEST-RUN MODEL â€” Scoring & Selection
+// ══════════════════════════════════════════════════════════════════════════
+// DUAL BEST-RUN MODEL — Scoring & Selection
 // Separates two distinct concepts:
-//   A. Best ranking setup example  â€” strongest ranking quality (lowest avg rank, etc.)
-//   B. Best Hit Run     â€” strongest hit-oriented outcome (highest Top-20, etc.)
-//   C. Recommended run  â€” composite recommendation under configurable strategy
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//   A. Best ranking setup example  — strongest ranking quality (lowest avg rank, etc.)
+//   B. Best Hit Run     — strongest hit-oriented outcome (highest Top-20, etc.)
+//   C. Recommended run  — composite recommendation under configurable strategy
+// ══════════════════════════════════════════════════════════════════════════
 
 // Sentinel value for missing/null rank values.
 // Treated as worst case (very high rank position) during scoring.
@@ -1832,7 +1895,7 @@ if (!defined('SKAI_LP_NULL_RANK_SENTINEL')) {
  * Safe [0..1] normalization helper.
  * When max == min (all values are equal), returns 1.0 so every record
  * is treated as "best possible" rather than being penalised.
- * If max < min (inverted range â€” should not happen in practice), also
+ * If max < min (inverted range — should not happen in practice), also
  * returns 1.0 defensively rather than producing a negative result.
  * Clamps val to the [min..max] range before normalizing.
  *
@@ -1843,7 +1906,7 @@ if (!defined('SKAI_LP_NULL_RANK_SENTINEL')) {
  */
 function skaiLpNormalize($val, $min, $max)
 {
-    // Guard: zero or inverted range â†’ treat as "all equal / best"
+    // Guard: zero or inverted range → treat as "all equal / best"
     if ((float)$max - (float)$min < 1.0e-10) { return 1.0; }
     $v = max((float)$min, min((float)$max, (float)$val));
     return ($v - (float)$min) / ((float)$max - (float)$min);
@@ -1854,29 +1917,29 @@ function skaiLpNormalize($val, $min, $max)
  *
  * Scoring formulas (all weights documented and sum to 1.00):
  *
- * SYSTEM QUALITY SCORE â€” measures ranking intelligence:
- *   sys = (norm_avg_rank_inv Ã— 0.45)   // lower avg rank â†’ better
- *       + (norm_weighted    Ã— 0.30)   // higher weighted score â†’ better
- *       + (norm_best_rank_inv Ã— 0.15) // lower best rank â†’ better
- *       + (norm_missing_inv Ã— 0.10)   // fewer missing â†’ better
+ * SYSTEM QUALITY SCORE — measures ranking intelligence:
+ *   sys = (norm_avg_rank_inv × 0.45)   // lower avg rank → better
+ *       + (norm_weighted    × 0.30)   // higher weighted score → better
+ *       + (norm_best_rank_inv × 0.15) // lower best rank → better
+ *       + (norm_missing_inv × 0.10)   // fewer missing → better
  *
- * HIT OPPORTUNITY SCORE â€” measures playable hit-range outcome:
- *   hit = (norm_top20       Ã— 0.45)   // more Top-20 hits â†’ better
- *       + (norm_top10       Ã— 0.30)   // more Top-10 hits â†’ better
- *       + (norm_missing_inv Ã— 0.15)   // fewer missing â†’ better
- *       + (norm_avg_rank_inv Ã— 0.10)  // lower avg rank â†’ secondary tie-break
+ * HIT OPPORTUNITY SCORE — measures playable hit-range outcome:
+ *   hit = (norm_top20       × 0.45)   // more Top-20 hits → better
+ *       + (norm_top10       × 0.30)   // more Top-10 hits → better
+ *       + (norm_missing_inv × 0.15)   // fewer missing → better
+ *       + (norm_avg_rank_inv × 0.10)  // lower avg rank → secondary tie-break
  *
  * BALANCED RECOMMENDATION SCORE:
- *   balanced = (sys Ã— 0.60) + (hit Ã— 0.40)
+ *   balanced = (sys × 0.60) + (hit × 0.40)
  *
  * "Inv" normalization: for "lower is better" metrics, normalize the
  * INVERTED distance from the maximum:
  *   norm_inv = (max - val) / (max - min)
- * This maps min_val â†’ 1.0 (best) and max_val â†’ 0.0 (worst).
+ * This maps min_val → 1.0 (best) and max_val → 0.0 (worst).
  *
  * Null / missing values are treated as worst case:
- *   avg_rank and best_rank â†’ sentinel 9999 (very high = worst)
- *   weighted_quality_score â†’ 0.0 (no quality)
+ *   avg_rank and best_rank → sentinel 9999 (very high = worst)
+ *   weighted_quality_score → 0.0 (no quality)
  *
  * Ties are resolved by the highest composite score; if scores are equal,
  * the first occurring record (most recent, since history is newest-first) wins.
@@ -1920,11 +1983,11 @@ function skaiLpComputeRunScores(array $records)
     $scores = array();
     $n = count($records);
     for ($i = 0; $i < $n; $i++) {
-        // "Lower is better" â†’ normalize the inverted distance from max
+        // "Lower is better" → normalize the inverted distance from max
         $normAvgInv  = skaiLpNormalize($maxAvg  - $avgRanks[$i],  0.0, $maxAvg  - $minAvg);
         $normBestInv = skaiLpNormalize($maxBest - $bestRanks[$i], 0.0, $maxBest - $minBest);
         $normMisInv  = skaiLpNormalize($maxMis  - $missings[$i],  0.0, $maxMis  - $minMis);
-        // "Higher is better" â†’ standard normalization
+        // "Higher is better" → standard normalization
         $normWs  = skaiLpNormalize($wScores[$i], $minWs,  $maxWs);
         $normT10 = skaiLpNormalize($top10s[$i],  $minT10, $maxT10);
         $normT20 = skaiLpNormalize($top20s[$i],  $minT20, $maxT20);
@@ -1965,16 +2028,16 @@ function skaiLpComputeRunScores(array $records)
  * Build a compact, user-facing run-setting label from AI share used percent and
  * strategy family name.
  *
- * Examples:  "55% â€¢ Balanced Mix"   "72% â€¢ AI-Forward"   "28% â€¢ Skip Pattern Boost"
+ * Examples:  "55% • Balanced Mix"   "72% • AI-Forward"   "28% • Skip Pattern Boost"
  *            "55%"  (family unknown)  "Balanced Mix"  (pct unknown)
- *            ""     (both unknown â€” legacy row)
+ *            ""     (both unknown — legacy row)
  *
  * NOTE: AI percent is rounded to the nearest integer for display.
- * The strategy family thresholds (AIâ‰¤40, AI 41-64, AIâ‰¥65) are defined at whole
+ * The strategy family thresholds (AI≤40, AI 41-64, AI≥65) are defined at whole
  * numbers, so sub-integer precision has no user-visible meaning.  Displaying
  * "55%" is always more readable than "55.4%" in a KPI label.
  *
- * @param  float|null  $aiPct       AI share used percent (0â€“100), or null if unknown
+ * @param  float|null  $aiPct       AI share used percent (0–100), or null if unknown
  * @param  string      $stratFamily Strategy family label, or '' if unknown
  * @return string
  */
@@ -1982,7 +2045,7 @@ function skaiLpFormatRunSettingLabel($aiPct, $stratFamily)
 {
     $stratFamily = (string)$stratFamily;
     if ($aiPct !== null && $stratFamily !== '') {
-        return (string)(int)round((float)$aiPct) . '% â€¢ ' . $stratFamily;
+        return (string)(int)round((float)$aiPct) . '% • ' . $stratFamily;
     }
     if ($aiPct !== null) {
         return (string)(int)round((float)$aiPct) . '%';
@@ -2082,7 +2145,7 @@ function skaiLpSelectBestSystemRun(array $records)
  *   1. Highest Top-20 hits (weight 0.45)
  *   2. Highest Top-10 hits (weight 0.30)
  *   3. Lowest missing count (weight 0.15)
- *   4. Lowest avg winning rank (weight 0.10 â€” secondary tie-break)
+ *   4. Lowest avg winning rank (weight 0.10 — secondary tie-break)
  * Ties: first record (most recent) wins.
  *
  * @param  array $records  Performance records
@@ -2108,9 +2171,9 @@ function skaiLpSelectBestHitRun(array $records)
  * Select the recommended run for a given strategy.
  *
  * Supported modes:
- *   'balanced'      â€” 60% system quality + 40% hit opportunity (default)
- *   'hit_priority'  â€” pure hit opportunity score
- *   'rank_priority' â€” pure system quality score
+ *   'balanced'      — 60% system quality + 40% hit opportunity (default)
+ *   'hit_priority'  — pure hit opportunity score
+ *   'rank_priority' — pure system quality score
  *
  * @param  array  $records  Performance records
  * @param  string $mode     Strategy mode (see above)
@@ -2120,7 +2183,7 @@ function skaiLpSelectRecommendedRun(array $records, $mode)
 {
     if (empty($records)) { return null; }
 
-    // Strategy â†’ score key + human labels
+    // Strategy → score key + human labels
     $strategyMap = array(
         'balanced'      => array(
             'key'    => 'balanced',
@@ -2130,7 +2193,7 @@ function skaiLpSelectRecommendedRun(array $records, $mode)
         'hit_priority'  => array(
             'key'    => 'hit',
             'label'  => 'Hit Priority Strategy',
-            'reason' => 'Maximizes hit-range outcomes â€” prioritizes Top-20 and Top-10 coverage.',
+            'reason' => 'Maximizes hit-range outcomes — prioritizes Top-20 and Top-10 coverage.',
         ),
         'rank_priority' => array(
             'key'    => 'sys',
@@ -2175,12 +2238,12 @@ function skaiLpDualRunInsight($bestSys, $bestHit, $sampleCount)
     } else {
         $text = 'The strongest ranking-quality run differed from the strongest hit-oriented run. '
               . 'This shows that SKAI can rank winning numbers well overall while a different run '
-              . 'may produce better short-range hit concentration â€” both results are valid and useful '
+              . 'may produce better short-range hit concentration — both results are valid and useful '
               . 'depending on what you are evaluating.';
     }
 
     if ((int)$sampleCount < 10) {
-        $text .= ' Note: the current sample is still very early â€” these patterns will become more '
+        $text .= ' Note: the current sample is still very early — these patterns will become more '
                . 'reliable as additional scored runs accumulate.';
     }
 
@@ -2190,7 +2253,7 @@ function skaiLpDualRunInsight($bestSys, $bestHit, $sampleCount)
 /**
  * Select the worst-performing run (highest average winning rank).
  * Consistent with the pattern used by skaiLpSelectBestSystemRun() and
- * skaiLpSelectBestHitRun() â€” avoids duplicating the null-safe loop inline.
+ * skaiLpSelectBestHitRun() — avoids duplicating the null-safe loop inline.
  *
  * @param  array $records  Performance records
  * @return int|null  Array index of the worst run, or null if no scored records
@@ -2212,10 +2275,10 @@ function skaiLpSelectWorstRun(array $records)
  * Return a tiered confidence label with run-count context.
  *
  * Thresholds (documented):
- *   < 10 runs  â†’ Very Early Stage
- *   10â€“24      â†’ Early Stage
- *   25â€“49      â†’ Moderate Confidence
- *   50+        â†’ Strong Confidence
+ *   < 10 runs  → Very Early Stage
+ *   10–24      → Early Stage
+ *   25–49      → Moderate Confidence
+ *   50+        → Strong Confidence
  *
  * @param  int $sampleCount
  * @return array { level, label, description }
@@ -2344,7 +2407,7 @@ function skaiLpCurrentHybridStatus($activeNow, $historyCount, $sampleCount)
  * Combines grade, trend intelligence, and consistency into a single
  * plain-language insight for the user.
  *
- * DO NOT fake metrics â€” all conditions are based on real computed values.
+ * DO NOT fake metrics — all conditions are based on real computed values.
  *
  * @param  array  $grade       Result of skaiLpGrade()
  * @param  array  $trend       Result of skaiLpTrendIntelligence()
@@ -2354,7 +2417,7 @@ function skaiLpCurrentHybridStatus($activeNow, $historyCount, $sampleCount)
  */
 function skaiLpInsight(array $grade, array $trend, array $consistency, array $confidence)
 {
-    // â”€â”€ Grade phrase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Grade phrase ──────────────────────────────────────────────
     $gradeMap = array(
         'elite'    => 'performing at an elite level',
         'strong'   => 'performing strongly',
@@ -2364,7 +2427,7 @@ function skaiLpInsight(array $grade, array $trend, array $consistency, array $co
     );
     $gradePhrase = $gradeMap[$grade['grade']] ?? 'performing at an unclassified level';
 
-    // â”€â”€ Trend phrase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Trend phrase ──────────────────────────────────────────────
     $trendDir = $trend['direction'];
     if ($trendDir === 'improving') {
         $trendPhrase = 'with a ' . strtolower((string)$trend['strength']) . ' recent improvement in prediction quality';
@@ -2376,16 +2439,16 @@ function skaiLpInsight(array $grade, array $trend, array $consistency, array $co
         $trendPhrase = 'with insufficient trend data';
     }
 
-    // â”€â”€ Consistency phrase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Consistency phrase ────────────────────────────────────────
     $consMap = array(
         'high'     => 'Results are reliably consistent across runs.',
         'moderate' => 'Performance varies moderately between runs.',
-        'volatile' => 'Results vary significantly between runs â€” some runs perform much better or worse than average.',
+        'volatile' => 'Results vary significantly between runs — some runs perform much better or worse than average.',
         'unknown'  => '',
     );
     $consPhrase = $consMap[$consistency['level']] ?? '';
 
-    // â”€â”€ Confidence caveat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Confidence caveat ─────────────────────────────────────────
     $confCaveat = '';
     if (in_array($confidence['level'], array('very_early', 'early'), true)) {
         $confCaveat = ' Note: the sample size is still small, so these trends may shift with more draws.';
@@ -2398,7 +2461,7 @@ function skaiLpInsight(array $grade, array $trend, array $consistency, array $co
     return trim($sentence);
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──────────────────────────────────────────────────────────────
 // Ensure SKAI Learning performance table exists (safe no-op if already created)
 skaiEnsurePerformanceTable($db);
 skaiEnsurePerformanceTableSchema($db);
@@ -2406,7 +2469,7 @@ skaiEnsurePerformanceTableSchema($db);
 // On failure, log a warning so administrators can diagnose schema issues.
 if (!skaiMigratePerformanceTableKeys($db)) {
     \Joomla\CMS\Log\Log::add(
-        'SKAI Learning performance: unique key migration failed â€” check database permissions.',
+        'SKAI Learning performance: unique key migration failed — check database permissions.',
         \Joomla\CMS\Log\Log::WARNING,
         'skai.learning'
     );
@@ -2430,7 +2493,7 @@ if (!MLE_DEMO_MODE && $app->input->getMethod() === 'POST' && $app->input->post->
 // --------------------------------------------------
 // Prediction List: Recency Sort Preference (persisted in #__user_profiles)
 // --------------------------------------------------
-$predSortPref = mylottoexpertGetUserPref($db, (int)$user->id, 'predSort', 'desc'); // 'desc' = newestâ†’oldest (default)
+$predSortPref = mylottoexpertGetUserPref($db, (int)$user->id, 'predSort', 'desc'); // 'desc' = newest→oldest (default)
 $predSortDir  = (strtolower($predSortPref) === 'asc') ? 'ASC' : 'DESC';
 
 // Allow POST change via form
@@ -2612,7 +2675,7 @@ if ($doGroupDelete && ($predictionTargetIdPost !== '' || ($lotteryId && $drawDat
 try {
     $db->setQuery("ALTER TABLE " . $db->quoteName('#__user_saved_settings') . " ADD COLUMN `user_notes` TEXT NULL DEFAULT NULL");
     $db->execute();
-} catch (Exception $__e) { /* column already exists â€” safe to ignore */ }
+} catch (Exception $__e) { /* column already exists — safe to ignore */ }
 
 // Update saved-settings note
 $__noteId = $app->input->post->getInt('update_setting_note', 0);
@@ -3515,9 +3578,9 @@ if (MLE_DEMO_MODE) {
 
 /* ===== merged style section ===== */
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ──────────────────────────────────────────────────────────────────────
    Design System Variables
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+────────────────────────────────────────────────────────────────────── */
 :root {
   /* SKAI Design System - Calm, Minimal Palette */
   --skai-surface: #ffffff;
@@ -3546,9 +3609,9 @@ if (MLE_DEMO_MODE) {
   --line-height: calc(var(--font-base-size) * var(--line-height-multiplier));
 }
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ──────────────────────────────────────────────────────────────────────
    Base & Typography
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+────────────────────────────────────────────────────────────────────── */
 
 #sp-main-body { padding-top: 5px !important; }
 
@@ -3582,9 +3645,9 @@ h3.title { font-size: 1.5rem; }
   letter-spacing: -0.01em;
 }
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ──────────────────────────────────────────────────────────────────────
    Cards & Containers
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+────────────────────────────────────────────────────────────────────── */
 .card {
   background: var(--skai-surface);
   border: 1px solid var(--skai-border-subtle);
@@ -3706,9 +3769,9 @@ h3.title { font-size: 1.5rem; }
   display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;
 }
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ──────────────────────────────────────────────────────────────────────
    Section Wrappers
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+────────────────────────────────────────────────────────────────────── */
 .favorites-wrapper{ padding:1.5rem; }
 .favorite-lotteries-header .btn-primary{ font-size:.9rem; padding:.5rem 1rem; }
 
@@ -3783,9 +3846,9 @@ h3.title { font-size: 1.5rem; }
   }
 }
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ──────────────────────────────────────────────────────────────────────
    Buttons & Inputs
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+────────────────────────────────────────────────────────────────────── */
 .btn-primary {
   background: var(--skai-accent);
   color: #fff;
@@ -3885,12 +3948,12 @@ h3.title { font-size: 1.5rem; }
 .prediction-card.heatmap { background: #fff7ed; border-left: 3px solid #f97316; }
 .prediction-card.heatmap .source-badge { background: #f97316; }
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ──────────────────────────────────────────────────────────────────────
    Number pills
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+────────────────────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────────────
    Number pills (fixed so extra matches are GREEN like mains)
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+────────────────────────────────────────────────────────────────────── */
 .drawn-pill, .match-pill, .no-match {
   padding: 1px 7px;
   margin: 2px;
@@ -3930,9 +3993,9 @@ h3.title { font-size: 1.5rem; }
 .common-card .common-numbers{ display:flex; flex-wrap:wrap; gap:.5rem; padding:1rem; }
 .common-count{ color:#1f618d; font-weight:600; font-size:1.05rem; }
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ──────────────────────────────────────────────────────────────────────
    Prediction Grid & Cards
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+────────────────────────────────────────────────────────────────────── */
 .prediction-card,
 .prediction-placeholder{
   border-radius:10px;
@@ -3963,7 +4026,7 @@ h3.title { font-size: 1.5rem; }
 .lottery-header{ margin-bottom:1.5rem; }
 
 /* Responsive columns:
-   - â‰¥ 1100px: 3 across
+   - ≥ 1100px: 3 across
    - 700 - 1099px: 2 across
    - < 700px: 1 across  */
 .predictions-row{
@@ -4110,7 +4173,7 @@ h3.title { font-size: 1.5rem; }
   font-size: 0.78rem;
 }
 
-/* â”€â”€ Outer lottery grouping wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Outer lottery grouping wrapper ──────────────────────────────── */
 .mle-lottery-outer {
   margin-bottom: 2.25rem;
 }
@@ -4542,7 +4605,7 @@ h3.title { font-size: 1.5rem; }
 
 /* ===== merged style section ===== */
 
-/* â”€â”€ Prediction Results Comparison â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Prediction Results Comparison ─────────────────────────── */
 .prc-wrap {
   margin: 0 0 14px 0;
 }
@@ -5209,7 +5272,7 @@ h3.title { font-size: 1.5rem; }
   margin:0.75rem 0;
 }
 
-/* â”€â”€ Decision Strip (world-class top bar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Decision Strip (world-class top bar) ───────────────────────── */
 .decision-strip{
   border:1px solid #dde3f0;
   border-radius:10px;
@@ -7501,10 +7564,10 @@ h3.title { font-size: 1.5rem; }
 }
 
 /* ================================================================
-   SKAI Learning performance â€“ Decision Intelligence Upgrade
+   SKAI Learning performance – Decision Intelligence Upgrade
    ================================================================ */
 
-/* â”€â”€ Performance grade badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Performance grade badges ──────────────────────────────────── */
 .skai-lp-grade {
   display: inline-block;
   padding: 0.28rem 0.9rem;
@@ -7520,7 +7583,7 @@ h3.title { font-size: 1.5rem; }
 .skai-lp-grade--weak     { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 .skai-lp-grade--unknown  { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
 
-/* â”€â”€ Dual-section split: System vs Opportunity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Dual-section split: System vs Opportunity ─────────────────── */
 .skai-lp-split {
   display: -webkit-flex;
   display: flex;
@@ -7587,7 +7650,7 @@ h3.title { font-size: 1.5rem; }
 .skai-lp-split-kpi-val--gold  { color: #b45309; }
 .skai-lp-split-kpi-val--dim   { color: #94a3b8; }
 
-/* â”€â”€ Grade + Performance level row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Grade + Performance level row ─────────────────────────────── */
 .skai-lp-grade-row {
   display: -webkit-flex;
   display: flex;
@@ -7604,7 +7667,7 @@ h3.title { font-size: 1.5rem; }
   color: #475569;
 }
 
-/* â”€â”€ Consistency meter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Consistency meter ──────────────────────────────────────────── */
 .skai-lp-consistency-row {
   display: -webkit-flex;
   display: flex;
@@ -7630,7 +7693,7 @@ h3.title { font-size: 1.5rem; }
 .skai-lp-cons-badge--unknown  { background: #f1f5f9; color: #94a3b8; }
 .skai-lp-cons-desc { font-size: 0.78rem; color: #94a3b8; }
 
-/* â”€â”€ Trend intelligence bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Trend intelligence bar ─────────────────────────────────────── */
 .skai-lp-trend-row {
   display: -webkit-flex;
   display: flex;
@@ -7660,7 +7723,7 @@ h3.title { font-size: 1.5rem; }
   color: #94a3b8;
 }
 
-/* â”€â”€ Insight / "What this means" block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Insight / "What this means" block ─────────────────────────── */
 .skai-lp-insight {
   margin: 0;
   padding: 0.85rem 1.25rem;
@@ -7689,7 +7752,7 @@ h3.title { font-size: 1.5rem; }
   line-height: 1.6;
 }
 
-/* â”€â”€ Confidence level row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Confidence level row ───────────────────────────────────────── */
 .skai-lp-conf-row {
   padding: 0.5rem 1.25rem 0.6rem;
   display: -webkit-flex;
@@ -7715,7 +7778,7 @@ h3.title { font-size: 1.5rem; }
 .skai-lp-conf-badge--strong     { background: #d1fae5; color: #065f46; }
 .skai-lp-conf-desc { font-size: 0.78rem; color: #64748b; line-height: 1.4; }
 
-/* â”€â”€ Enhanced row highlights in history table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Enhanced row highlights in history table ───────────────────── */
 .skai-lp-tbl tr.lp-row-best td   { background: #f0fdf4 !important; }
 .skai-lp-tbl tr.lp-row-worst td  { background: #fff7f7 !important; }
 .skai-lp-tbl .lp-tier-badge {
@@ -7732,7 +7795,7 @@ h3.title { font-size: 1.5rem; }
 .lp-tier-badge--weak     { background: #fee2e2; color: #991b1b; }
 .lp-tier-badge--unknown  { background: #f1f5f9; color: #94a3b8; }
 
-/* â”€â”€ Improved module status rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Improved module status rows ────────────────────────────────── */
 .skai-lp-mod-note {
   font-size: 0.72rem;
   color: #94a3b8;
@@ -7753,10 +7816,10 @@ h3.title { font-size: 1.5rem; }
 }
 
 /* ================================================================
-   SKAI Learning performance â€“ Dual Best-Run Model Upgrade
+   SKAI Learning performance – Dual Best-Run Model Upgrade
    ================================================================ */
 
-/* â”€â”€ 3-column card grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── 3-column card grid ─────────────────────────────────────────── */
 /* Inherits flex-wrap and gap from .skai-lp-split.                  */
 /* Cards grow/shrink equally with min-width 200px; at 640px each    */
 /* card is forced to full width via the responsive override below.  */
@@ -7772,21 +7835,21 @@ h3.title { font-size: 1.5rem; }
   flex: 1 1 200px;
 }
 
-/* â”€â”€ Best ranking setup example card (blue tint) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Best ranking setup example card (blue tint) ───────────────────────────── */
 .skai-lp-split-card--sys {
   background: -webkit-linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #93c5fd;
 }
 
-/* â”€â”€ Recommended run card (purple tint) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Recommended run card (purple tint) ─────────────────────────── */
 .skai-lp-split-card--rec {
   background: -webkit-linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%);
   background: linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%);
   border-color: #c4b5fd;
 }
 
-/* â”€â”€ Card sub-description line â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Card sub-description line ──────────────────────────────────── */
 .skai-lp-split-card-desc {
   font-size: 0.75rem;
   color: #64748b;
@@ -7795,7 +7858,7 @@ h3.title { font-size: 1.5rem; }
   font-style: italic;
 }
 
-/* â”€â”€ Run-setting badge (shown on each Best-Run card) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Run-setting badge (shown on each Best-Run card) ─────────────── */
 .skai-lp-run-setting-badge {
   display: inline-block;
   font-size: 0.8rem;
@@ -7891,7 +7954,7 @@ h3.title { font-size: 1.5rem; }
   .skai-lp-story-charts { grid-template-columns: 1fr; }
 }
 
-/* â”€â”€ "Why these results differ" explanation block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── "Why these results differ" explanation block ────────────────── */
 .skai-lp-dual-explain {
   margin: 0;
   padding: 0.85rem 1.25rem;
@@ -7930,7 +7993,7 @@ h3.title { font-size: 1.5rem; }
   border-left: 3px solid #a78bfa;
 }
 
-/* â”€â”€ Run-role badges for the history table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Run-role badges for the history table ──────────────────────── */
 .lp-run-badge {
   display: inline-block;
   padding: 0.12rem 0.4rem;
@@ -7945,13 +8008,13 @@ h3.title { font-size: 1.5rem; }
 .lp-run-badge--hit { background: #d1fae5; color: #065f46; }
 .lp-run-badge--rec { background: #ede9fe; color: #5b21b6; }
 
-/* â”€â”€ Role cell â€” allow wrapping of stacked badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Role cell — allow wrapping of stacked badges ───────────────── */
 .skai-lp-tbl .lp-role-cell {
   white-space: normal;
   min-width: 70px;
 }
 
-/* â”€â”€ Table legend bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Table legend bar ───────────────────────────────────────────── */
 .skai-lp-tbl-legend {
   font-size: 0.75rem;
   color: #64748b;
@@ -7994,7 +8057,7 @@ h3.title { font-size: 1.5rem; }
       </h2>
 
       <p class="skai-section__subtitle">
-        Use this page to review your saved predictions, compare repeated numbers, and see what your past results support before you make your next move.
+        Use this page to review saved predictions, compare repeated signals, and decide your next move using your scored history.
       </p>
     </div>
 
@@ -8296,7 +8359,7 @@ $sourceLabels = [
 ];
 $__methodLabels = $sourceLabels;
 
-// Map source keys â†’ short codes for compact display
+// Map source keys → short codes for compact display
 $iconMap = [
     'ai_prediction'   => 'NN',
     'skip_hit'        => 'PA',
@@ -8531,7 +8594,7 @@ function mylottoexpertFormatDrawHeldLabel($row)
         if ($__ts === false) { continue; }
         $__time = date('g:i A', $__ts);
         if ($__time !== '12:00 AM') {
-            return $__time . ($session !== '' ? ' â€¢ ' . ucwords(str_replace('_', ' ', $session)) : '');
+            return $__time . ($session !== '' ? ' • ' . ucwords(str_replace('_', ' ', $session)) : '');
         }
     }
 
@@ -9062,7 +9125,7 @@ function mylottoexpertDigitStringToArray($value)
 }
 
 /**
- * Format a single lottery digit (0-9) with a leading zero for display (e.g., 3 â†’ '03').
+ * Format a single lottery digit (0-9) with a leading zero for display (e.g., 3 → '03').
  * Values >= 10 are returned as plain string. Non-digit values are cast to int first.
  */
 function mylottoexpertFormatBonusDigit($n)
@@ -9301,8 +9364,8 @@ function mylottoexpertExtractDailySavedView($row)
                     $comboString = mylottoexpertNormalizeDigitString($comboRow['display']);
                 } elseif (!empty($comboRow['values'])) {
                     if (is_array($comboRow['values'])) {
-                        // FIX: Use strval() not intval() â€” strval preserves each digit as-is
-                        // (intval('06') â†’ 6, destroying leading zeros; strval('06') â†’ '06').
+                        // FIX: Use strval() not intval() — strval preserves each digit as-is
+                        // (intval('06') → 6, destroying leading zeros; strval('06') → '06').
                         $comboString = implode('', array_map('strval', $comboRow['values']));
                     } else {
                         $comboString = mylottoexpertNormalizeDigitString($comboRow['values']);
@@ -9325,11 +9388,11 @@ function mylottoexpertExtractDailySavedView($row)
                 if (!empty($__dcc['display'])) {
                     $__dccStr = mylottoexpertNormalizeDigitString($__dcc['display']);
                 } elseif (!empty($__dcc['combo']) && is_array($__dcc['combo'])) {
-                    // FIX: Use strval() not intval() â€” preserves digit '0' correctly.
+                    // FIX: Use strval() not intval() — preserves digit '0' correctly.
                     $__dccStr = implode('', array_map('strval', $__dcc['combo']));
                 } elseif (!empty($__dcc['values'])) {
                     if (is_array($__dcc['values'])) {
-                        // FIX: Use strval() not intval() â€” preserves digit '0' correctly.
+                        // FIX: Use strval() not intval() — preserves digit '0' correctly.
                         $__dccStr = implode('', array_map('strval', $__dcc['values']));
                     } else {
                         $__dccStr = mylottoexpertNormalizeDigitString((string)$__dcc['values']);
@@ -9345,10 +9408,10 @@ function mylottoexpertExtractDailySavedView($row)
         // [[SKAI_DISPLAY_SYNC]] Fallback: read aiPredictedNumbers (display strings in FPS JSON)
         // GUARD: Only treat aiPredictedNumbers as daily combo strings when the FPS JSON
         // predictionMode is explicitly 'daily_digit' OR is absent (legacy pre-predictionMode
-        // rows saved before this field was added â€” those are assumed daily when aiPredictedNumbers
+        // rows saved before this field was added — those are assumed daily when aiPredictedNumbers
         // is present, since regular-lottery FPS JSON did not contain aiPredictedNumbers then).
         // Regular-lottery rows (EuroMillions, Powerball) with predictionMode='standard_lottery'
-        // MUST be skipped â€” their aiPredictedNumbers contain number display strings like "1,7,14"
+        // MUST be skipped — their aiPredictedNumbers contain number display strings like "1,7,14"
         // that would incorrectly trigger daily rendering.
         // Extra guard: if prediction_family='regular' (structured column) always skip.
         $__rowFamily   = (is_object($row) && isset($row->prediction_family)) ? (string)$row->prediction_family : '';
@@ -9363,7 +9426,7 @@ function mylottoexpertExtractDailySavedView($row)
                     $__apnStr = mylottoexpertNormalizeDigitString((string)$__apn['display']);
                 } elseif (!empty($__apn['values'])) {
                     $__apnStr = is_array($__apn['values'])
-                        // FIX: Use strval() not intval() â€” preserves digit '0' correctly.
+                        // FIX: Use strval() not intval() — preserves digit '0' correctly.
                         ? implode('', array_map('strval', $__apn['values']))
                         : mylottoexpertNormalizeDigitString((string)$__apn['values']);
                 }
@@ -9462,7 +9525,7 @@ function mylottoexpertExtractDailySavedView($row)
 }
 
 /**
- * Map a US state/territory name â†’ USPS abbreviation (uppercase).
+ * Map a US state/territory name → USPS abbreviation (uppercase).
  * Falls back to first two letters if unknown. Input may be mixed case.
  */
 function stateToAbbrev(string $stateName): string
@@ -9530,7 +9593,7 @@ function buildLotteryLogoPath(string $stateName, string $gameName): array
         }
     }
 
-    // None found â†’ return the first (your canonical) for <img src> if you prefer,
+    // None found → return the first (your canonical) for <img src> if you prefer,
     // but we'll mark exists=false so the badge shows instead.
     return ['path' => $candidates[0], 'exists' => false, 'alt' => $gameName . ' logo'];
 }
@@ -9635,7 +9698,7 @@ $q = $db->getQuery(true)
 $db->setQuery($q);
 $favoriteLotteries = $db->loadAssocList() ?: [];
 
-// Build lookup: lottery_id â†’ country + state
+// Build lookup: lottery_id → country + state
 $lottoMetaById = [];
 foreach ($favoriteLotteries as $lotto) {
     $id = $lotto['lottery_id'];
@@ -9647,7 +9710,7 @@ foreach ($favoriteLotteries as $lotto) {
     ];
 }
 
-// Build lookup: lottery_id â†’ state_name
+// Build lookup: lottery_id → state_name
 $lottoStatesById = [];
 foreach ($favoriteLotteries as $lotto) {
     if (!empty($lotto['lottery_id']) && !empty($lotto['state_name'])) {
@@ -9655,7 +9718,7 @@ foreach ($favoriteLotteries as $lotto) {
     }
 }
 
-// Build map of lottery_id â†’ official URL
+// Build map of lottery_id → official URL
 $lottoUrlsById = [];
 foreach ($favoriteLotteries as $lotto) {
     $lotteryId   = !empty($lotto['lottery_id']) ? (int)$lotto['lottery_id'] : 0;
@@ -9962,7 +10025,7 @@ foreach ($groups as $g) {
     }
 
     // Alias all extra ball columns uniformly.
-    // Naming convention: index 0 â†’ 'extra_ball', index 1 â†’ 'extra_ball_2', index 2 â†’ 'extra_ball_3', ...
+    // Naming convention: index 0 → 'extra_ball', index 1 → 'extra_ball_2', index 2 → 'extra_ball_3', ...
     // (extra_ball is the legacy name for the first extra; subsequent extras use _2, _3, ... suffixes)
     // All SELECT statements in the UNION must have the same number of columns, so games
     // with fewer extras emit NULL placeholders.
@@ -10196,10 +10259,10 @@ foreach ($groups as $groupKey => $g) {
 
         $__scored = scoreRunFromDrawMap($drawMap, (string)$g['game_id'], (string)$g['draw_date'], $predMain, $predExtra);
 
-        // â”€â”€ Fallback: when the UNION-ALL/drawMap path has no data for this
+        // ── Fallback: when the UNION-ALL/drawMap path has no data for this
         //    game+date (common for regular lotteries without an extra ball or
         //    when the UNION ALL query failed), fall back to a direct DB lookup  - 
-        //    same two-phase logic used by the per-draw-group rendering code. â”€â”€
+        //    same two-phase logic used by the per-draw-group rendering code. ──
         if (!$__scored['has_draw']) {
             $__bkTs  = strtotime((string)$g['draw_date']);
             $__bkKey = $g['game_id'] . ':' . ($__bkTs ? date('Y-m-d', $__bkTs) : (string)$g['draw_date']);
@@ -10264,7 +10327,7 @@ foreach ($groups as $groupKey => $g) {
                 $__hm = 0; $__he = 0;
                 foreach ($predMain as $__pn) {
                     // For regular lotteries skip 0 (not a valid ball; used as padding).
-                    // For daily games 0 IS a valid digit (e.g. Pick-3 "012" â†’ [0,1,2]).
+                    // For daily games 0 IS a valid digit (e.g. Pick-3 "012" → [0,1,2]).
                     if (!$__isDailyPred && !$__pn) { continue; }
                     if (in_array((int)$__pn, $__bkDraw['main'], true)) { $__hm++; }
                 }
@@ -10453,6 +10516,8 @@ foreach ($groups as $__gKey => $__g) {
         $__runSummary[$__lid] = array(
             'lottery_name' => (string)($__g['lottery_name'] ?? ''),
             'state_name'   => (string)($lottoMetaById[$__lid]['state'] ?? ''),
+            'country_name' => (string)($lottoMetaById[$__lid]['country'] ?? ''),
+            'game_id'      => (string)($__g['game_id'] ?? ''),
             'runs'         => array(),
             'max_hits'     => 0,
             'best_run_id'  => 0,
@@ -10470,7 +10535,7 @@ foreach ($groups as $__gKey => $__g) {
     $__drawMapLegacyKey = strtolower((string)($__g['game_id'] ?? '')) . '|' . $__gDateNorm;
     $__preferCanonicalDrawLookup = ($__gTargetAt !== '' || $__gTargetSession !== '');
 
-    // â”€â”€ Fetch draw for this canonical target (cached per game+date+time/session) â”€â”€
+    // ── Fetch draw for this canonical target (cached per game+date+time/session) ──
     // Primary legacy path: use the preloaded $drawMap when no session/time disambiguation is needed.
     // Canonical path: call getDrawByDate() with draw_session / draw_at so daily sessions cannot collide.
     if (!array_key_exists($__fbCacheKey, $__prcDrawCache)) {
@@ -10580,7 +10645,7 @@ foreach ($groups as $__gKey => $__g) {
                 if (empty($__grpExtra)) {
                     foreach ($__dmExtracted['extra'] as $__gv) { if ($__groupHasDaily || $__gv !== 0) { $__grpExtra[] = $__gv; } }
                 }
-                // â”€â”€ Daily-game raw-row fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Daily-game raw-row fallback ─────────────────────────────────────────────────────
                 // Daily games (Pick 3/4/5, etc.) have no main_ball_columns configured.
                 // The UNION ALL emits all-NULL main aliases, and the normalized drawMap row
                 // has no original digit columns (only main_0..main_N which are all NULL).
@@ -10637,7 +10702,7 @@ foreach ($groups as $__gKey => $__g) {
             }
         }
 
-        // â”€â”€ Supplemental raw-row scan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Supplemental raw-row scan ────────────────────────────────────────────────────────────
         // When the game expects extra balls but we still have fewer than expected, do a targeted
         // raw-row scan for the missing values. This is especially important for daily lotteries,
         // where the config may declare extraBallCount but not name the raw DB extra column.
@@ -10798,7 +10863,7 @@ foreach ($groups as $__gKey => $__g) {
             $__predComboStrings = array();
         }
 
-        // â”€â”€ Score against the direct-DB draw (the sole source for this section) â”€â”€
+        // ── Score against the direct-DB draw (the sole source for this section) ──
         $__scored = null;
         if ($__grpDraw['has_draw']) {
             $__fbMainHits  = 0;
@@ -10931,12 +10996,12 @@ foreach ($__runSummary as $__lid => &$__lsRef) {
 }
 unset($__lsRef);
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──────────────────────────────────────────────────────────────
 // SKAI Learning performance: calculate and persist metrics
 // for every completed (has_draw = true) run in $__runSummary.
 // This uses the pred_main (ranked list) and actual_main (drawn numbers)
 // that were already computed above. No additional DB reads needed.
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──────────────────────────────────────────────────────────────
 foreach ($__runSummary as $__lpLid => $__lpLottery) {
     $__lpLotteryName = (string)($__lpLottery['lottery_name'] ?? '');
     foreach ($__lpLottery['runs'] as $__lpRun) {
@@ -11049,7 +11114,7 @@ foreach ($__runSummary as $__lpLid => $__lpLottery) {
 
         // Derive the actual run setting (AI share used %, strategy family) from the
         // saved run's settings for persistence in notes_json.  This is what the
-        // KPI panel surfaces as the "run setting" â€” the real slider value used.
+        // KPI panel surfaces as the "run setting" — the real slider value used.
         $__lpSavedRowForBlend = $__lpSavedRow;
         $__lpBlendInfo = mylottoexpertBuildBlendDisplayInfo($__lpSavedRowForBlend, $__lpSettings);
 
@@ -11295,7 +11360,7 @@ foreach ($bestOpps as $__dLid => $__dOpp) {
                     $__modeBlendValue = strtoupper(trim((string)$__modeBlendInline2[1])) . ' ' . trim((string)$__modeBlendInline2[2]) . '%';
                 } elseif (preg_match('/\b(AI|Skip)\s*(\d+(?:\.\d+)?)%\b/i', $__modeLabelRaw, $__modeBlendLoose)) {
                     $__modeBlendValue = strtoupper(trim((string)$__modeBlendLoose[1])) . ' ' . trim((string)$__modeBlendLoose[2]) . '%';
-                } elseif (preg_match('/^(.*?)(\d+(?:\.\d+)?)%\s*AI\s*[-â€“|]?\s*(.*)$/i', $__modeLabelRaw, $__modeMatchAlt)) {
+                } elseif (preg_match('/^(.*?)(\d+(?:\.\d+)?)%\s*AI\s*[-–|]?\s*(.*)$/i', $__modeLabelRaw, $__modeMatchAlt)) {
                     $__modeMainLabel = trim((string)$__modeMatchAlt[1], " -|\t\r\n \v");
                     $__modeBlendValue = 'AI ' . trim((string)$__modeMatchAlt[2]) . '%';
                     $__modeBlendTail = trim((string)$__modeMatchAlt[3], " -|\t\r\n \v");
@@ -11621,7 +11686,7 @@ usort($__intelligenceCards, function ($a, $b) {
 </div>
 
 <?php
-// â”€â”€ Best Setup Snapshot (server-side render) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Best Setup Snapshot (server-side render) ──────────────────────
 $__snapHasData = false;
 foreach ($bestOpps as $__sopp) {
     $__bav = isset($__sopp['best_avg_hits']) ? $__sopp['best_avg_hits'] : null;
@@ -11757,8 +11822,14 @@ foreach ($bestOpps as $__sopp) {
   <?php foreach ($__runSummary as $__prcLid => $__prcData):
       $__prcRuns      = $__prcData['runs'] ?? array();
       if (empty($__prcRuns)) { continue; }
-      $__prcLotName   = htmlspecialchars((string)$__prcData['lottery_name'], ENT_QUOTES, 'UTF-8');
-      $__prcState     = htmlspecialchars((string)$__prcData['state_name'],   ENT_QUOTES, 'UTF-8');
+      $__prcDisplayMeta = mylottoexpertResolveDisplayLocationMeta(
+          (string)($__prcData['state_name'] ?? ''),
+          (string)($__prcData['country_name'] ?? ''),
+          (string)($__prcData['lottery_name'] ?? ''),
+          (string)($__prcData['game_id'] ?? '')
+      );
+      $__prcLotName   = htmlspecialchars((string)$__prcDisplayMeta['lottery'], ENT_QUOTES, 'UTF-8');
+      $__prcState     = htmlspecialchars((string)$__prcDisplayMeta['state'], ENT_QUOTES, 'UTF-8');
       $__prcMaxHits   = (int)$__prcData['max_hits'];
       $__prcBestRunId = (int)$__prcData['best_run_id'];
       $__prcTotal     = count($__prcRuns);
@@ -12119,7 +12190,7 @@ foreach ($bestOpps as $__sopp) {
 </div>
 
 <?php
-// â”€â”€ SKAI Learning performance: preload history for all active lottery IDs â”€â”€
+// ── SKAI Learning performance: preload history for all active lottery IDs ──
 // Keyed by lottery_id => array of performance records (most-recent-first)
 $__skaiPerfByLottery = array();
 foreach ($groups as $__g2) {
@@ -12130,7 +12201,7 @@ foreach ($groups as $__g2) {
 }
 unset($__g2, $__g2Lid);
 
-// â”€â”€ Build per-lottery grouped list (outer container by lottery, draws sorted newest first) â”€â”€
+// ── Build per-lottery grouped list (outer container by lottery, draws sorted newest first) ──
 $__byLottery = array();           // lottery_id => ['lottery_id','lottery_name','groups'=>[...]]
 $__lotteryOrder = array();        // preserve first-seen lottery ordering
 foreach ($groups as $__gKey => $__gVal) {
@@ -12183,15 +12254,8 @@ unset($__lotRef);
         <span class="mle-lottery-outer-logo-fallback" aria-hidden="true"><?php echo htmlspecialchars($__ini ?: 'LE', ENT_QUOTES); ?></span>
       <?php endif; ?>
     <?php endif; ?>
-    <h2 class="mle-lottery-outer-title">
-      <?php if ($__outerCountry) echo htmlspecialchars($__outerCountry, ENT_QUOTES); ?>
-      <?php if ($__outerState && $__outerState !== 'Lottery'): ?>
-        &nbsp;&bull;&nbsp;<?php echo htmlspecialchars($__outerState, ENT_QUOTES); ?>
-      <?php endif; ?>
-      <?php if (!empty($__outerLot['lottery_name'])): ?>
-        &nbsp;&bull;&nbsp;<?php echo htmlspecialchars((string)$__outerLot['lottery_name'], ENT_QUOTES); ?>
-      <?php endif; ?>
-    </h2>
+    <?php $__outerTitle = mylottoexpertFormatLotteryLocationLine($__outerState, $__outerCountry, (string)$__outerLot['lottery_name']); ?>
+    <h2 class="mle-lottery-outer-title"><?php echo htmlspecialchars((string)$__outerTitle, ENT_QUOTES, 'UTF-8'); ?></h2>
     <span class="mle-lottery-outer-badge"><?php echo $__outerDrawCount; ?> drawing<?php echo $__outerDrawCount !== 1 ? 's' : ''; ?></span>
     <button type="button" class="mle-lottery-outer-toggle"
             data-outer-lottery-toggle-btn="<?php echo $__outerLid; ?>"
@@ -12237,31 +12301,17 @@ unset($__lotRef);
     <?php endif; ?>
   <?php endif; ?>
 
-<h2 class="lottery-title skai-card__title" style="margin:0;">
-  <span class="lottery-name">
-    <?php if ($country) echo htmlspecialchars($country, ENT_QUOTES); ?>
-  </span>
-
-  <?php if ($state && $state !== 'Lottery'): ?>
-    &nbsp;&bull;&nbsp;
-    <span class="lottery-name">
-      <?php echo htmlspecialchars($state, ENT_QUOTES); ?>
-    </span>
-  <?php endif; ?>
-
 <?php
   $lotName = '';
   if (!empty($g['lottery_name']))       { $lotName = $g['lottery_name']; }
   elseif (!empty($g['game_name']))      { $lotName = $g['game_name']; }
   elseif (!empty($s->lottery_name))     { $lotName = $s->lottery_name; }
+  $__drawHeader = mylottoexpertFormatLotteryLocationLine($state, $country, $lotName, (string)($g['game_id'] ?? ''));
 ?>
 
-<?php if (!empty($lotName)): ?>
-  &nbsp;&bull;&nbsp;
-  <span class="lottery-name"><?php echo htmlspecialchars($lotName, ENT_QUOTES); ?></span>
-<?php endif; ?>
-
-  &nbsp;&bull;&nbsp;
+<h2 class="lottery-title skai-card__title" style="margin:0;">
+  <span class="lottery-name"><?php echo htmlspecialchars((string)$__drawHeader, ENT_QUOTES, 'UTF-8'); ?></span>
+  <?php if ($__drawHeader !== ''): ?>&nbsp;&bull;&nbsp;<?php endif; ?>
   <span class="sdi-draw-date">
     <?php
       $ts = strtotime((string)($g['draw_date'] ?? ''));
@@ -12321,11 +12371,11 @@ unset($__lotRef);
   <div class="lottery-collapsible-content">
 
       <?php
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ──────────────────────────────────────────────────────────────
         // GROUP-LEVEL: Placement & Performance Stats (per lottery/draw)
         // Derives rank positions from the order of saved main_numbers.
         // Also sets pre/post mode based on whether the actual draw exists.
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ──────────────────────────────────────────────────────────────
 
         // Build per-method buckets for this group
 $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','heatmap'];
@@ -12391,8 +12441,8 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
           return $pos;
         };
 
-        // Crunch stats  -  use the BEST run per method (most total hits â†’ lowest
-        // pos_sum tiebreak â†’ highest run_id) so the heatmap reflects the
+        // Crunch stats  -  use the BEST run per method (most total hits → lowest
+        // pos_sum tiebreak → highest run_id) so the heatmap reflects the
         // prediction that performed best, not merely the first saved run.
 
         // Pass 1: identify best run per method
@@ -12484,7 +12534,7 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
           'skip_hit'        => 'Skip & Hit',
           'ai_prediction'   => 'AI',
           'mcmc_prediction' => 'MCMC',
-          'skai_prediction' => 'SKAI',      // â† NEW
+          'skai_prediction' => 'SKAI',      // ← NEW
           'heatmap'         => 'Heatmap',
         ];
 
@@ -13257,12 +13307,12 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
     </div><!-- end footer post-draw -->
 
     <?php
-    // â”€â”€ Setting intelligence â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Setting intelligence ──────────────────────────────────────────
     // Analyses $bestOpps[$lid]['all_scored_runs'] to identify which settings
     // families have been most consistent across completed draws.
     // Uses $__savedSetsById (run_id => row array) already built above.
     // All helper logic uses closures so re-definition inside the foreach is safe.
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ───────────────────────────────────────────────────────────────────────
 
     $__ciLid        = (int)$g['lottery_id'];
     $__ciScoredRuns = isset($bestOpps[$__ciLid]['all_scored_runs'])
@@ -13448,8 +13498,8 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
         if ($hitRate > 0.5) { $raw += 2.0; } // repeatability bonus
         // Small sample penalty: penalise families seen in only 1 - 4 draws to prevent
         // rare one-off spikes from outranking configurations with broader evidence.
-        // Thresholds chosen so a single-draw family scores â‰¤55% of its raw value,
-        // a two-draw family â‰¤75%, and a four-draw family â‰¤88%.
+        // Thresholds chosen so a single-draw family scores ≤55% of its raw value,
+        // a two-draw family ≤75%, and a four-draw family ≤88%.
         if ($nd < 2)      { $factor = 0.55; }
         elseif ($nd < 3)  { $factor = 0.75; }
         elseif ($nd < 5)  { $factor = 0.88; }
@@ -13457,7 +13507,7 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
         return round($raw * $factor, 4);
     };
 
-    // â”€â”€ Aggregate runs into family buckets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Aggregate runs into family buckets ──────────────────────────────────
     $__ciFamilies = array();
     foreach ($__ciScoredRuns as $__ciRun) {
         $__ciRunId  = (int)($__ciRun['run_id'] ?? 0);
@@ -13519,7 +13569,7 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
         return 0;
     });
 
-    // â”€â”€ Derive the four insights â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Derive the four insights ─────────────────────────────────────────────
     $__ciTotalScoredRuns  = count($__ciScoredRuns);
     $__ciTotalDrawDates   = 0;
     $__ciAllDrawDates     = array();
@@ -13597,7 +13647,7 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
         }
     }
 
-    // â”€â”€ Build "why it stands out" sentences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Build "why it stands out" sentences ────────────────────────────────
     $__ciBuildWhy = function(array $f, bool $isConsistent) {
         $n  = (int)$f['n_runs'];
         $nd = (int)$f['n_draws'];
@@ -13814,11 +13864,11 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
     </div><!-- end skai-ci-module -->
 
     <?php
-    // â”€â”€ Stability guide (Layer 3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Stability guide (Layer 3) ─────────────────────────────────────────────
     // Reuses CI variables: $__ciInsightA, $__ciInsightC, $__ciNextTweak,
     // $__ciStableAdvice, $__ciRanked, $__ciScoredRuns, $__ciFamilies,
     // $__ciHasEnoughData.
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─────────────────────────────────────────────────────────────────────────
 
     // A: Keep the same  -  anchor variables to preserve
     $__scKeepStable = $__ciStableAdvice;
@@ -13874,10 +13924,10 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
         $__scDisciplineNote = 'The sample is still early. Avoid making configuration changes based on fewer than 3 completed draws  -  the signal is forming but not yet reliable enough to act on.';
     }
 
-    // â”€â”€ Evidence quality + Pattern Drift (Layer 4) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Evidence quality + Pattern Drift (Layer 4) ───────────────────────────
     // Derives confidence level from completed draw count and scored run count.
     // Compares top vs bottom family settings to surface pattern drift.
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─────────────────────────────────────────────────────────────────────────
 
     $__eqTotalRuns   = $__ciTotalScoredRuns;
     $__eqTotalDraws  = $__ciTotalDrawDates;
@@ -14247,10 +14297,10 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
               $cls   = 'zero';
               $style = '';
             } else {
-              // === RANK â†’ COLOR mapping ===
+              // === RANK → COLOR mapping ===
               // rank #1 (leftmost) -> Hue 0 (red) ; rank #20 (rightmost) -> Hue 240 (blue)
               $t    = ($__maxRankMain > 1) ? (($c - 1) / ($__maxRankMain - 1)) : 0; // 0..1
-              $hue  = 0 + (240 * $t);                // 0=red â†’ 240=blue
+              $hue  = 0 + (240 * $t);                // 0=red → 240=blue
 
               // Slight intensity boost by count: higher counts = a bit darker (lower lightness)
               $ratio = $val / $globalMax;            // 0..1
@@ -14445,7 +14495,7 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
 
   <div style="font-size:0.85rem; color:#4a5568; line-height:1.4;">
     <strong>Pattern by method:</strong>
-    <em><?php echo htmlspecialchars(implode('  â€¢  ', $perMethodSummaries), ENT_QUOTES); ?></em>
+    <em><?php echo htmlspecialchars(implode('  •  ', $perMethodSummaries), ENT_QUOTES); ?></em>
     <br>
     <span style="opacity:0.9;">
       Tip: Aim to stack more of your chosen numbers where methods hit early (ranks #1 - #5), and use later ranks as light support numbers.
@@ -14575,7 +14625,7 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
   <?php endif; ?>
 
 <?php
-// â•â• SKAI Learning performance Panel â€“ Decision Intelligence â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ SKAI Learning performance Panel – Decision Intelligence ══════════════
 // Upgraded panel: performance grading, consistency, trend intelligence,
 // DUAL best-run model (system quality vs hit opportunity), and recommendations.
 $__lpGroupLid     = (int)$g['lottery_id'];
@@ -14583,23 +14633,23 @@ $__lpGroupHistory = isset($__skaiPerfByLottery[$__lpGroupLid]) ? (array)$__skaiP
 $__lpGroupTrend   = skaiComputeTrend($__lpGroupHistory);
 $__lpGroupCard    = skaiDeriveScorecard($__lpGroupTrend);
 
-// â”€â”€ Grading (based on last-10 avg rank; fall back to lifetime) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Grading (based on last-10 avg rank; fall back to lifetime) ────────────
 $__lpGradeAvg     = ($__lpGroupTrend['last10_avg'] !== null) ? $__lpGroupTrend['last10_avg'] : $__lpGroupTrend['lifetime_avg'];
 $__lpGrade        = skaiLpGrade($__lpGradeAvg);
 
-// â”€â”€ Consistency / variance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Consistency / variance ────────────────────────────────────────────────
 $__lpConsistency  = skaiLpConsistency($__lpGroupHistory);
 
-// â”€â”€ Trend intelligence (direction + strength) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Trend intelligence (direction + strength) ─────────────────────────────
 $__lpTrendIntel   = skaiLpTrendIntelligence($__lpGroupTrend['delta_10vs20']);
 
-// â”€â”€ Confidence level (tiered, by run count) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Confidence level (tiered, by run count) ───────────────────────────────
 $__lpConfidence   = skaiLpConfidenceLabel((int)$__lpGroupTrend['sample_count']);
 
-// â”€â”€ Insight paragraph â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Insight paragraph ─────────────────────────────────────────────────────
 $__lpInsightText  = skaiLpInsight($__lpGrade, $__lpTrendIntel, $__lpConsistency, $__lpConfidence);
 
-// â”€â”€ DUAL BEST-RUN MODEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── DUAL BEST-RUN MODEL ───────────────────────────────────────────────────
 // Best ranking setup example: run with strongest ranking quality (sys composite score)
 $__lpBestSystem   = skaiLpSelectBestSystemRun($__lpGroupHistory);
 // Best Hit Run: run with strongest hit-oriented outcome (hit composite score)
@@ -14609,7 +14659,7 @@ $__lpRecommended  = skaiLpSelectRecommendedRun($__lpGroupHistory, 'balanced');
 // "Why these results differ" interpretation text
 $__lpDualInsight  = skaiLpDualRunInsight($__lpBestSystem, $__lpBestHit, (int)$__lpGroupTrend['sample_count']);
 
-// â”€â”€ Setting-context helpers: training style + same-setting trend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Setting-context helpers: training style + same-setting trend ──────────
 $__lpBuildRunContext = function(array $__lpRunCard) use ($__savedSetsById, $__lpGroupHistory) {
     $__ctx = array(
         'training_style' => '',
@@ -14695,16 +14745,16 @@ $__lpBestHitCtx     = ($__lpBestHit !== null) ? $__lpBuildRunContext($__lpBestHi
 $__lpRecommendedCtx = ($__lpRecommended !== null) ? $__lpBuildRunContext($__lpRecommended) : null;
 
 
-// â”€â”€ Row indexes for table badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Row indexes for table badges ──────────────────────────────────────────
 // Each role maps to the array index of the corresponding record in $__lpGroupHistory
 $__lpSysRowIdx = ($__lpBestSystem   !== null) ? (int)$__lpBestSystem['idx']  : null;
 $__lpHitRowIdx = ($__lpBestHit      !== null) ? (int)$__lpBestHit['idx']     : null;
 $__lpRecRowIdx = ($__lpRecommended  !== null) ? (int)$__lpRecommended['idx'] : null;
 
-// Worst row (highest avg rank) â€” uses dedicated helper to stay DRY
+// Worst row (highest avg rank) — uses dedicated helper to stay DRY
 $__lpWorstRowIdx = skaiLpSelectWorstRun($__lpGroupHistory);
 
-// â”€â”€ Module flag summary (most recent 10 scored runs) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Module flag summary (most recent 10 scored runs) ─────────────────────
 $__lpModFlags = array(
     'tail_enabled' => 0, 'tail_active' => 0,
     'calibration_enabled' => 0, 'calibration_active' => 0,
@@ -14805,7 +14855,7 @@ $__lpLiveTuneLabel = skaiLpCurrentHybridStatus(
     $__lpModSampleCount
 );
 
-// â”€â”€ Display helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Display helpers ───────────────────────────────────────────────────────
 $__lpFmtNum = function($v, $decimals = 1) {
     if ($v === null || $v === '') { return '<span style="color:#cbd5e1;">&#8212;</span>'; }
     return htmlspecialchars((string)round((float)$v, $decimals), ENT_QUOTES);
@@ -14821,7 +14871,7 @@ $__lpFmtRankColor = function($v) {
 };
 ?>
 
-<!-- â•â• LEARNING PERFORMANCE PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ══ LEARNING PERFORMANCE PANEL ══════════════════════════════════════ -->
 <div class="card skai-lp-panel">
 
   <!-- Header + overall status badge -->
@@ -14839,7 +14889,7 @@ $__lpFmtRankColor = function($v) {
   </div>
 
   <?php if (empty($__lpGroupHistory)): ?>
-  <!-- â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Empty state ───────────────────────────────────────────────────── -->
   <div class="skai-lp-empty">
     <span class="skai-lp-empty-icon">&#x1F52D;</span>
     <strong>No validated runs yet</strong><br>
@@ -14849,7 +14899,7 @@ $__lpFmtRankColor = function($v) {
 
   <?php else: ?>
 
-  <!-- â”€â”€ Performance grade â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Performance grade ────────────────────────────────────────────── -->
   <div class="skai-lp-grade-row">
     <span class="skai-lp-grade-label">Current performance level:</span>
     <span class="skai-lp-grade <?php echo htmlspecialchars($__lpGrade['class'], ENT_QUOTES); ?>">
@@ -14862,7 +14912,7 @@ $__lpFmtRankColor = function($v) {
     <?php endif; ?>
   </div>
 
-  <!-- â”€â”€ Consistency â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Consistency ──────────────────────────────────────────────────── -->
   <div class="skai-lp-consistency-row">
     <span>Consistency:</span>
     <span class="skai-lp-cons-badge skai-lp-cons-badge--<?php echo htmlspecialchars($__lpConsistency['level'], ENT_QUOTES); ?>">
@@ -14876,7 +14926,7 @@ $__lpFmtRankColor = function($v) {
     </span>
   </div>
 
-  <!-- â”€â”€ Rolling Average KPI strip (system overview) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Rolling Average KPI strip (system overview) ───────────────────── -->
   <div class="skai-lp-kpi-row" style="padding-bottom:0.5rem;">
     <div class="skai-lp-kpi-tile">
       <div class="skai-lp-kpi-tile-label">Recent 10-run avg rank</div>
@@ -14902,18 +14952,18 @@ $__lpFmtRankColor = function($v) {
   </div>
   <div style="margin:0.25rem 0 0.85rem; color:#475569; font-size:0.84rem; line-height:1.55;">
     <strong>How to read these:</strong> the rank numbers show where the real winning numbers appeared in the prediction list.
-    <strong>Lower is better.</strong> â€œRecent 10-run avg rankâ€ uses your newest 10 scored runs.
-    â€œRecent 25-run avg rankâ€ uses your newest 25 scored runs. â€œAll-run avg rankâ€ uses every scored run for this lottery.
+    <strong>Lower is better.</strong> “Recent 10-run avg rank” uses your newest 10 scored runs.
+    “Recent 25-run avg rank” uses your newest 25 scored runs. “All-run avg rank” uses every scored run for this lottery.
   </div>
 
   <hr class="skai-lp-divider">
 
-  <!-- â”€â”€ DUAL BEST-RUN MODEL: 3-card layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── DUAL BEST-RUN MODEL: 3-card layout ───────────────────────────── -->
   <!--
     THREE DISTINCT CONCEPTS:
-    1. Best ranking setup example   â€” strongest ranking quality (sys composite score)
-    2. Best Hit Run      â€” strongest hit-oriented outcome (hit composite score)
-    3. Recommended run   â€” balanced composite recommendation
+    1. Best ranking setup example   — strongest ranking quality (sys composite score)
+    2. Best Hit Run      — strongest hit-oriented outcome (hit composite score)
+    3. Recommended run   — balanced composite recommendation
     A run with the lowest avg rank is NOT always the run with the most hits.
     Both are valuable but they mean different things.
   -->
@@ -15084,10 +15134,10 @@ $__lpFmtRankColor = function($v) {
 
   <hr class="skai-lp-divider">
 
-  <!-- â”€â”€ Learning engine status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Learning engine status ────────────────────────────────────────── -->
   <div class="skai-lp-modules">
     <div class="skai-lp-modules-title">Learning engine status for the latest draw context</div>
-    <div style="margin:0.35rem 0 0.75rem; color:#475569; font-size:0.86rem; line-height:1.55;">â€œActive nowâ€ means the latest accumulated draw context is using that engine. â€œUsed beforeâ€ means past scored results show it has been used, but not in the latest draw context. The note beside each item tells you how much history supports it.</div>
+    <div style="margin:0.35rem 0 0.75rem; color:#475569; font-size:0.86rem; line-height:1.55;">“Active now” means the latest accumulated draw context is using that engine. “Used before” means past scored results show it has been used, but not in the latest draw context. The note beside each item tells you how much history supports it.</div>
     <?php
     $__lpModRows = array(
         array('name' => 'Tail Recovery',  'label' => $__lpTailLabel,   'desc' => 'Shows whether blended SKAI is active now and whether past results support it'),
@@ -15111,7 +15161,7 @@ $__lpFmtRankColor = function($v) {
 
   <hr class="skai-lp-divider">
 
-  <!-- â”€â”€ Metric definitions (expanded with dual-model concepts) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Metric definitions (expanded with dual-model concepts) ─────────── -->
   <div class="skai-lp-definitions">
     <details>
       <summary>&#x2139;&#xFE0F; How these measures work</summary>
@@ -15129,7 +15179,7 @@ $__lpFmtRankColor = function($v) {
         <div class="skai-lp-def-item">
           <strong>Setting used</strong>
           The exact AI share used percentage that was active when the run was generated.
-          Shown as &ldquo;55% &bull; Balanced Mix&rdquo; â€” the number is the real slider value.
+          Shown as &ldquo;55% &bull; Balanced Mix&rdquo; — the number is the real slider value.
         </div>
         <div class="skai-lp-def-item">
           <strong>Strategy family</strong>
@@ -15158,7 +15208,7 @@ $__lpFmtRankColor = function($v) {
         <div class="skai-lp-def-item">
           <strong>Why the ranking result and hit result can differ</strong>
           A run can rank winning numbers better overall (lower avg rank) without
-          producing the highest hit count in a specific threshold â€” and vice versa.
+          producing the highest hit count in a specific threshold — and vice versa.
           Both measures are valid for different evaluation goals.
         </div>
         <div class="skai-lp-def-item">
@@ -15187,7 +15237,7 @@ $__lpFmtRankColor = function($v) {
 
   <hr class="skai-lp-divider">
 
-  <!-- â”€â”€ Per-run history table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Per-run history table ─────────────────────────────────────────── -->
   <div class="skai-lp-history">
     <details>
       <summary style="cursor:pointer;font-size:0.82rem;font-weight:700;color:#475569;
@@ -15285,7 +15335,7 @@ $__lpFmtRankColor = function($v) {
   <?php endif; ?>
 
 </div>
-<!-- â•â• END LEARNING PERFORMANCE PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ══ END LEARNING PERFORMANCE PANEL ══════════════════════════════════ -->
 
 </div>
 
@@ -15386,7 +15436,7 @@ $__lpFmtRankColor = function($v) {
   $displayLabel = (string)$__cardDisp['label'];
   $displayLabelHtml = isset($__cardDisp['label_html']) ? (string)$__cardDisp['label_html'] : htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8');
 
-  // Pick a timestamp: generated_at â†’ date_saved â†’ draw_date
+  // Pick a timestamp: generated_at → date_saved → draw_date
   $tsRaw = $s->generated_at ?: ($s->date_saved ?: ($g['draw_date'] ?? ''));
   $ts    = strtotime((string) $tsRaw);
   // Output ISO 8601 format for JavaScript to convert to local timezone
@@ -15438,7 +15488,7 @@ $__lpFmtRankColor = function($v) {
 </button>
 
 <button type="button" class="btn-print" title="Print this prediction" data-print-card-btn="1">
-  ðŸ–¨ï¸ Print
+  🖨️ Print
 </button>
 
 </div>
@@ -15799,7 +15849,7 @@ if (!empty($settingLabels)) {
 
   <button type="submit" class="btn-primary"
            style="padding:0.3rem 0.8rem; font-size:.8rem;">
-    ðŸ’¾ Save Settings
+    💾 Save Settings
   </button>
 </form>
 
@@ -15907,7 +15957,7 @@ $savedSettings = $db->loadAssocList() ?: [];
     </div>
     <ul style="list-style:none; margin:0; padding:1rem;">
       <?php foreach ($savedSettings as $set):
-        // Decode JSON params â€” support both new structured format and legacy flat format.
+        // Decode JSON params — support both new structured format and legacy flat format.
         $params = json_decode($set['params'], true) ?: [];
 
         // Normalize: resolve Training Style from multiple legacy keys.
@@ -15949,9 +15999,15 @@ $savedSettings = $db->loadAssocList() ?: [];
             <span style="font-size:0.8rem;color:#64748b;">
               <?php
                 $sourceLabel = ucfirst(str_replace('_', ' ', $set['source']));
-                $state       = htmlspecialchars($set['state_name'] ?? '', ENT_QUOTES, 'UTF-8');
-                $lotteryName = htmlspecialchars($set['lottery_name'] ?? '', ENT_QUOTES, 'UTF-8');
-                $__locParts  = array_filter([$state, $lotteryName]);
+                $__setDisplayMeta = mylottoexpertResolveDisplayLocationMeta(
+                    (string)($set['state_name'] ?? ''),
+                    '',
+                    (string)($set['lottery_name'] ?? ''),
+                    ''
+                );
+                $state       = htmlspecialchars((string)$__setDisplayMeta['state'], ENT_QUOTES, 'UTF-8');
+                $lotteryName = htmlspecialchars((string)$__setDisplayMeta['lottery'], ENT_QUOTES, 'UTF-8');
+                $__locParts  = array_filter([$state, $lotteryName], static function($v) { return $v !== ''; });
                 echo htmlspecialchars($sourceLabel, ENT_QUOTES, 'UTF-8');
                 if (!empty($__locParts)) { echo ' &mdash; ' . implode(' &bull; ', $__locParts); }
                 if ($__pageSavedFrom !== '') { echo ' &mdash; saved from: ' . htmlspecialchars($__pageSavedFrom, ENT_QUOTES, 'UTF-8'); }
@@ -15962,7 +16018,7 @@ $savedSettings = $db->loadAssocList() ?: [];
             <em><?php echo date('M j, Y g:ia', strtotime($set['created_at'])); ?></em>
           </div>
 
-          <!-- â”€â”€ Identity fields: always shown first for quick recognition â”€â”€ -->
+          <!-- ── Identity fields: always shown first for quick recognition ── -->
           <div class="settings-identity" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
             <?php if ($__trainingStyle !== ''): ?>
               <span style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:4px;padding:2px 8px;font-size:0.8rem;font-weight:600;">
@@ -15983,7 +16039,7 @@ $savedSettings = $db->loadAssocList() ?: [];
           <?php if ($params): ?>
             <div class="settings-params" style="font-size:0.82rem; color:#475569; margin-top:0.3rem;">
               <?php
-                // Human-friendly labels â€” identity fields already shown above, exclude from flat list.
+                // Human-friendly labels — identity fields already shown above, exclude from flat list.
                 $__skipParamsDisplay = ['training_style','profile','risk_profile','strategy','blend',
                                         'skai_run_mode','mode','run_mode',
                                         'skai_blend_skip_pct','skai_blend_ai_pct','blend_skip_pct',
@@ -16054,7 +16110,7 @@ $savedSettings = $db->loadAssocList() ?: [];
               <textarea name="user_notes"
                         rows="3"
                         maxlength="1000"
-                        placeholder="Add a personal note about this settingâ€¦"
+                        placeholder="Add a personal note about this setting…"
                         style="width:100%;font-size:0.82rem;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;resize:vertical;box-sizing:border-box;"
                         ><?php echo htmlspecialchars((string)($set['user_notes'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
               <div style="display:flex;gap:6px;margin-top:4px;">
@@ -16121,6 +16177,8 @@ $savedSettings = $db->loadAssocList() ?: [];
     </div>
   </summary>
 
+  <p class="mle-section-explainer" style="margin:0.75rem 1rem 0;">Track your selected lotteries in one place. Use this section to confirm each lottery context and quickly open official results.</p>
+
   <div id="favorites-list">
  
     <?php if (!empty($favoriteLotteries)): ?>
@@ -16169,6 +16227,25 @@ $savedSettings = $db->loadAssocList() ?: [];
             // Determine an optional "type badge" (e.g., "Powerball")
             $typeBadge = '';
             $nameLower = mb_strtolower($lotto['lottery_name'], 'UTF-8');
+            $lottoDisplayMeta = mylottoexpertResolveDisplayLocationMeta(
+                (string)($lotto['state_name'] ?? ''),
+                (string)($lotto['country_name'] ?? ''),
+                (string)($lotto['lottery_name'] ?? ''),
+                (string)($lotto['game_id'] ?? '')
+            );
+            $lottoDisplayTitle = mylottoexpertFormatLotteryLocationLine(
+                (string)$lottoDisplayMeta['state'],
+                (string)$lottoDisplayMeta['country'],
+                (string)$lottoDisplayMeta['lottery'],
+                (string)($lotto['game_id'] ?? '')
+            );
+            $lottoDisplayLocation = mylottoexpertFormatLotteryLocationLine(
+                (string)$lottoDisplayMeta['state'],
+                (string)$lottoDisplayMeta['country'],
+                '',
+                (string)($lotto['game_id'] ?? ''),
+                ', '
+            );
             if (strpos($nameLower, 'pick 3') !== false) {
                 $typeBadge = 'Pick 3';
             } elseif (strpos($nameLower, 'pick 4') !== false) {
@@ -16207,13 +16284,16 @@ $savedSettings = $db->loadAssocList() ?: [];
       <?php endif; ?>
 
       <span class="title">
-        <?php echo htmlspecialchars($lotto['country_name'], ENT_QUOTES); ?> â€¢ <?php echo htmlspecialchars($lotto['state_name'], ENT_QUOTES); ?> â€¢ <strong><?php echo htmlspecialchars($lotto['lottery_name'], ENT_QUOTES); ?></strong><br>â€¢ Last: <?php echo $lastDraw; ?>
+        <?php if ($lottoDisplayTitle !== ''): ?>
+          <?php echo htmlspecialchars((string)$lottoDisplayTitle, ENT_QUOTES, 'UTF-8'); ?><br>
+        <?php endif; ?>
+        Last completed draw: <?php echo $lastDraw; ?>
       </span>
     </div>
   </div>
 
             <div class="lottery-details">
-              ðŸ“ <?php echo htmlspecialchars($lotto['state_name'], ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars($lotto['country_name'], ENT_QUOTES, 'UTF-8'); ?>
+              Location: <?php echo htmlspecialchars($lottoDisplayLocation !== '' ? $lottoDisplayLocation : 'Not specified', ENT_QUOTES, 'UTF-8'); ?>
             </div>
 
             <div class="draw-info">
@@ -16244,6 +16324,8 @@ $savedSettings = $db->loadAssocList() ?: [];
 <!-- ==================================================
      Wheeling Preferences Section 
      ================================================== -->
+<?php $mleShowWheelingPreferences = false; ?>
+<?php if ($mleShowWheelingPreferences): ?>
 <details open class="card wheeling-card">
   <summary class="card-header">
     <div style="display:flex; justify-content:space-between; align-items:center; width:100%; flex-wrap:wrap; gap:1rem;">
@@ -16281,6 +16363,7 @@ $savedSettings = $db->loadAssocList() ?: [];
     <p class="text-muted" style="margin-top:1rem;">No favorite wheeling systems selected.</p>
   <?php endif; ?>
 </details>
+<?php endif; ?>
 
 </div>
 
@@ -16944,9 +17027,9 @@ numbersDiv.innerHTML =
       : ''
   );
 
-      // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ─────────────────────────────────────────────────────────
       // Decision Set (click-to-build)  -  selection state per group
-      // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ─────────────────────────────────────────────────────────
       var decisionWrap   = group.querySelector('[data-decision-wrap]');
       var decisionGrid   = group.querySelector('[data-decision-grid]');
       var decisionStatus = group.querySelector('[data-decision-status]');
@@ -17384,9 +17467,9 @@ countSpan.textContent = '(Mains: ' + commonsMain.length + ', Extra: ' + commonsE
         applyOverlapHighlight(softExtra, true);
       }
 
-      // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ─────────────────────────────────────────────────────────
       // Dynamic Narrative based on CURRENT selection (mode-aware)
-      // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ─────────────────────────────────────────────────────────
       // IMPORTANT: Decision Strip updates must run even if narrative is not present.
       // So we run this block when either narrative OR decision strip exists.
       if (narrativeEl || group.querySelector('[data-decision-strip]')) {
@@ -17502,7 +17585,7 @@ selStats.__selectedCount = checked.length;
         }
 function topRanksWithTies(row, maxShow, minTotal){
   // Sweet spot = ranks with the highest hit counts among selected cards,
-  // only if we have enough evidence (â‰¥ minTotal total hits).
+  // only if we have enough evidence (≥ minTotal total hits).
   var total = 0, maxVal = 0, ranks = [];
   for (var k in row){
     if (!Object.prototype.hasOwnProperty.call(row,k)) continue;
@@ -17629,7 +17712,7 @@ methods.forEach(function(m){
   if (!selectedCards.length) return;
 
   var rowE = selStats[m].extra;
-  var peakE = topRanksWithTies(rowE, 2, 2); // require â‰¥2 hits
+  var peakE = topRanksWithTies(rowE, 2, 2); // require ≥2 hits
 
   var ranksE = peakE.ranks;
   if (!ranksE.length) return;
@@ -17662,7 +17745,7 @@ methods.forEach(function(m){
 });
 recMain = unique(recMain);
 
-// 3) Mid-Rank Value (ranks 4 - 10 across all selected cards, â‰¥2 appearances, excluding current recs)
+// 3) Mid-Rank Value (ranks 4 - 10 across all selected cards, ≥2 appearances, excluding current recs)
 var midRankNums = [];
 checked.forEach(function(cb){
   var card = cb.closest('.prediction-card');
@@ -17691,10 +17774,10 @@ var outliers = Object.keys(outlierFM).map(function(k){ return parseInt(k,10); })
   .filter(function(v){ return !overlapSetMain.has(v) && recMain.indexOf(v) === -1 && recMid.indexOf(v) === -1; });
 var recOutliers = take(outliers, 2);
 
-// Final MAIN recommendation list (ordered: Overlap â†’ Peaks â†’ Mid â†’ Outliers)
+// Final MAIN recommendation list (ordered: Overlap → Peaks → Mid → Outliers)
 var finalMain = unique([].concat(recMain, recMid, recOutliers));
 
-// EXTRA recommendations: Overlap â†’ method peaks (1 per method) â†’ extras with â‰¥2 mid ranks (if applicable)
+// EXTRA recommendations: Overlap → method peaks (1 per method) → extras with ≥2 mid ranks (if applicable)
 var recExtra = unique(commonsExtra);
 methods.forEach(function(m){
   if (!candidatesExtraByMethod[m].length) return;
@@ -17784,7 +17867,7 @@ if (decisionStrip) {
   var overlapScore  = commonsMain.length + commonsExtra.length;
   var evidenceScore = bits.length;
 
-  // Confidence is locked as Hybrid (Agreement Ã— Historical Validation).
+  // Confidence is locked as Hybrid (Agreement × Historical Validation).
   // The "level" is what changes based on evidence quality.
   var levelLabel = 'Exploratory';
   var levelNote  = 'Good for exploring ideas \u2014 keep building more history.';
@@ -17814,7 +17897,7 @@ if (decisionStrip) {
 // Removal includes: coverageMap calculation, coverage display logic, and UI population.
 // Code block originally at lines ~5283-5357 removed entirely.
 
-// Overlap summary line already computed â†’ overlapLine
+// Overlap summary line already computed → overlapLine
 
 // Build provenance map for chips (what tags apply to each number)
 function provenanceFor(n){
@@ -18016,7 +18099,7 @@ if (nextSteps && nextSteps.length) {
   html += '\u003cdiv class="bullet"\u003e\u003cem\u003eNo changes suggested right now \u2014 this is a reasonable baseline.\u003c/em\u003e\u003c/div\u003e';
 }
 
-// Render structured narrative (Sorcerer <..> â†’ HTML)
+// Render structured narrative (Sorcerer <..> → HTML)
 // Also mark it as a live status region for assistive tech.
 if (narrativeEl) {
   narrativeEl.setAttribute('role', 'status');
@@ -19098,7 +19181,7 @@ function _mleEsc(str) {
 
 /**
  * Print a single prediction card.
- * Called from the ðŸ–¨ï¸ button on each card.
+ * Called from the 🖨️ button on each card.
  */
 function mlePrintCard(btn) {
   var card = btn && btn.closest ? btn.closest('.prediction-card') : null;
@@ -19108,7 +19191,7 @@ function mlePrintCard(btn) {
 
 /**
  * Print all prediction cards in a lottery group.
- * Called from the "ðŸ–¨ï¸ Print All" button in the lottery header.
+ * Called from the "🖨️ Print All" button in the lottery header.
  */
 function mlePrintGroup(btn) {
   var group = btn && btn.closest ? btn.closest('.lottery-group') : null;
@@ -19310,7 +19393,7 @@ function mlePrintHistoricalLottery(btn) {
 function _mleOpenPrintWindow(cards, triggerEl, groupEl) {
   if (!cards || !cards.length) { return; }
 
-  // â”€â”€ Resolve lottery title â”€â”€
+  // ── Resolve lottery title ──
   var group = groupEl ||
     (triggerEl && triggerEl.closest ? triggerEl.closest('.lottery-group') : null);
   var lotteryTitle = '';
@@ -19324,18 +19407,18 @@ function _mleOpenPrintWindow(cards, triggerEl, groupEl) {
   });
   var cardCount = cards.length;
 
-  // â”€â”€ Build each card's HTML â”€â”€
+  // ── Build each card's HTML ──
   var cardsHtml = '';
   Array.prototype.forEach.call(cards, function (card, idx) {
     cardsHtml += _mleBuildCardHtml(card, idx + 1, cardCount);
   });
 
-  // â”€â”€ Assemble a complete standalone HTML document â”€â”€
+  // ── Assemble a complete standalone HTML document ──
   // The style-tag block is the ONLY stylesheet in the popup window  - 
   // no Joomla CSS, no Bootstrap, no theme overrides.
   // NOTE: _LT/_GT replace literal < > in HTML strings so Joomla's text filter
   // (which runs on script-block content) cannot strip HTML tags from these literals.
-   // â”€â”€ Assemble a complete standalone HTML document â”€â”€
+   // ── Assemble a complete standalone HTML document ──
   // FIX: Use array join so no string literal can ever span lines (ES5-safe).
   var __p = [];
   __p.push(_LT+'!DOCTYPE html'+_GT+_LT+'html lang="en"'+_GT+_LT+'head'+_GT);
@@ -19356,7 +19439,7 @@ function _mleOpenPrintWindow(cards, triggerEl, groupEl) {
 
   __p.push(_LT+'/style'+_GT+_LT+'/head'+_GT+_LT+'body'+_GT);
 
-  // â”€â”€ Report header â”€â”€
+  // ── Report header ──
   __p.push(_LT+'table style="width:100%;border-collapse:collapse;margin-bottom:24px;" cellspacing="0" cellpadding="0"'+_GT);
   __p.push(_LT+'tr'+_GT);
   __p.push(_LT+'td style="background:#0A1A33;padding:18px 22px;vertical-align:middle;"'+_GT);
@@ -19385,7 +19468,7 @@ function _mleOpenPrintWindow(cards, triggerEl, groupEl) {
 
   __p.push(cardsHtml);
 
-  // â”€â”€ Disclaimer footer â”€â”€
+  // ── Disclaimer footer ──
   __p.push(_LT+'table style="width:100%;border-collapse:collapse;margin-top:28px;" cellspacing="0" cellpadding="0"'+_GT);
   __p.push(_LT+'tr'+_GT);
   __p.push(_LT+'td style="border-top:1px solid #e5e7eb;padding:10px 0;font-family:Arial,Helvetica,sans-serif;font-size:7.5pt;color:#9ca3af;text-align:center;"'+_GT);
@@ -19398,9 +19481,9 @@ function _mleOpenPrintWindow(cards, triggerEl, groupEl) {
 
   var fullHtml = __p.join('');
 
-  // â”€â”€ Try to open an isolated print popup â”€â”€
+  // ── Try to open an isolated print popup ──
   // Opening window.open('') synchronously from the click handler means the
-  // browser treats it as a user-gesture-initiated popup â†’ not blocked.
+  // browser treats it as a user-gesture-initiated popup → not blocked.
   // Using document.write() bypasses blob:/data: URI CSP restrictions entirely.
   // win.print() prints the NEW window  -  it can never print the Joomla host page.
   var MLE_WIN_CLOSE_MS = 120000; // 2 minutes: safety-net close if afterprint never fires
@@ -19428,7 +19511,7 @@ function _mleOpenPrintWindow(cards, triggerEl, groupEl) {
     return;
   }
 
-  // â”€â”€ Popup blocked: fall back to in-page print overlay â”€â”€
+  // ── Popup blocked: fall back to in-page print overlay ──
   _mlePrintFallback(cardsHtml, lotteryTitle, printDate, cardCount);
 }
 
@@ -19577,11 +19660,11 @@ function _mleFormatNums(nodes, isExtra) {
  */
 function _mleBuildCardHtml(card, cardIndex, totalCards) {
 
-  // â”€â”€ Method badge â”€â”€
+  // ── Method badge ──
   var badgeEl = card.querySelector('.source-badge');
   var method  = badgeEl ? badgeEl.textContent.trim() : 'Prediction';
 
-  // â”€â”€ Run label: walk direct TEXT_NODE children to skip nested .local-time ISO string â”€â”€
+  // ── Run label: walk direct TEXT_NODE children to skip nested .local-time ISO string ──
   var runLabel = '';
   var tsLabelEl = card.querySelector('.timestamp-label');
   if (tsLabelEl) {
@@ -19592,7 +19675,7 @@ function _mleBuildCardHtml(card, cardIndex, totalCards) {
     runLabel = labelParts.join('').replace(/\s+/g, ' ').replace(/\s*[\u2013-]\s*$/, '').trim();
   }
 
-  // â”€â”€ Saved-at timestamp: prefer data-timestamp attribute (ISO) for accuracy â”€â”€
+  // ── Saved-at timestamp: prefer data-timestamp attribute (ISO) for accuracy ──
   var savedAt = '';
   var savedAtContainer = card.querySelector('.timestamp-container');
   if (savedAtContainer) {
@@ -19608,7 +19691,7 @@ function _mleBuildCardHtml(card, cardIndex, totalCards) {
     }
   }
 
-  // â”€â”€ Settings rows â”€â”€
+  // ── Settings rows ──
   var settingRowEls = card.querySelectorAll('.settings-panel .setting-row');
   var settingItems  = [];
   Array.prototype.forEach.call(settingRowEls, function (row) {
@@ -19623,11 +19706,11 @@ function _mleBuildCardHtml(card, cardIndex, totalCards) {
     if (lbl && val) { settingItems.push({ lbl: lbl, val: val }); }
   });
 
-  // â”€â”€ Hit counts â”€â”€
+  // ── Hit counts ──
   var mainHits  = card.querySelectorAll('.match-pill:not(.extra)').length;
   var extraHits = card.querySelectorAll('.match-pill.extra').length;
 
-  // â”€â”€ Number sets â”€â”€
+  // ── Number sets ──
   var drawnMain  = card.querySelectorAll('.drawn-pill:not(.extra)');
   var drawnExtra = card.querySelectorAll('.drawn-pill.extra');
   var predMain   = card.querySelectorAll('.match-pill:not(.extra),.no-match:not(.extra)');
@@ -19639,7 +19722,7 @@ function _mleBuildCardHtml(card, cardIndex, totalCards) {
   // isPending: has predicted numbers but the draw hasn't happened yet
   var isPending  = !hasDrawn && (predMain.length > 0 || predExtra.length > 0);
 
-  // â”€â”€ Build matched-number list for the Match Result section â”€â”€
+  // ── Build matched-number list for the Match Result section ──
   var matchedNums = [];
   Array.prototype.forEach.call(predMain, function (n) {
     if (n.classList.contains('match-pill')) {
@@ -19657,7 +19740,7 @@ function _mleBuildCardHtml(card, cardIndex, totalCards) {
     }
   });
 
-  // â”€â”€ Status badge â”€â”€
+  // ── Status badge ──
   var badgeHtml = '';
   if (isUpcoming) {
     badgeHtml = _LT+'span style="background:#e0f2fe;color:#0369a1;border-radius:3px;padding:3px 10px;'
@@ -19677,16 +19760,16 @@ function _mleBuildCardHtml(card, cardIndex, totalCards) {
               + _mleEsc(hLabel) + _LT+'/span'+_GT;
   }
 
-  // â”€â”€ Prediction counter label â”€â”€
+  // ── Prediction counter label ──
   var counterLabel = (totalCards > 1)
     ? 'PREDICTION #' + cardIndex + ' OF ' + totalCards
     : 'PREDICTION';
 
-  // â”€â”€ Meta line (run label + saved date) â”€â”€
+  // ── Meta line (run label + saved date) ──
   var metaLine = runLabel || '';
   if (savedAt) { metaLine += (metaLine ? '  \u2022  Saved: ' : 'Saved: ') + savedAt; }
 
-  // â”€â”€ Helper: build a section label row (full-width shaded header) â”€â”€
+  // ── Helper: build a section label row (full-width shaded header) ──
   function secLabel(text, bg, fg) {
     return _LT+'tr'+_GT+_LT+'td style="padding:7px 16px;background:' + (bg || '#e8edf5')
       + ';border-top:1.5px solid #c7d2e6;font-family:Arial,Helvetica,sans-serif;'
@@ -19694,13 +19777,13 @@ function _mleBuildCardHtml(card, cardIndex, totalCards) {
       + ';text-transform:uppercase;letter-spacing:0.1em;"'+_GT + text + _LT+'/td'+_GT+_LT+'/tr'+_GT;
   }
 
-  // â”€â”€ Helper: build a section content row (full-width white content area) â”€â”€
+  // ── Helper: build a section content row (full-width white content area) ──
   function secContent(innerHtml, bg) {
     return _LT+'tr'+_GT+_LT+'td style="padding:12px 16px 14px;background:' + (bg || '#ffffff')
       + ';border-bottom:1px solid #e5e9f0;"'+_GT + innerHtml + _LT+'/td'+_GT+_LT+'/tr'+_GT;
   }
 
-  // â”€â”€ Helper: render a NodeList as a large bold number line with dash separators â”€â”€
+  // ── Helper: render a NodeList as a large bold number line with dash separators ──
   //    extraNodes is optional (bonus ball, rendered smaller + labeled)
   function numLine(mainNodes, extraNodes) {
     var mainStr = _mleFormatNums(mainNodes, false);
@@ -19723,7 +19806,7 @@ function _mleBuildCardHtml(card, cardIndex, totalCards) {
     return html;
   }
 
-// â”€â”€ Assemble card HTML â”€â”€
+// ── Assemble card HTML ──
 var S_TBL = 'style="width:100%;border-collapse:collapse;" cellspacing="0" cellpadding="0"';
 
 // FIX: Build with array join to prevent any possibility of newline-in-string-literal (ES5-safe).
@@ -19732,7 +19815,7 @@ var __h = [];
 // Card wrapper
 __h.push(_LT+'div style="margin-bottom:28px;page-break-inside:avoid;border:1.5px solid #c7d2e6;border-radius:6px;overflow:hidden;"'+_GT);
 
-// â”€â”€ Card header: dark navy bar â”€â”€
+// ── Card header: dark navy bar ──
 __h.push(_LT+'table ' + S_TBL + _GT);
 __h.push(_LT+'tr'+_GT);
 
@@ -19773,7 +19856,7 @@ __h.push(_LT+'/table'+_GT);
 
 // Commit assembled header HTML to string
 var html = __h.join('');
-  // â”€â”€ Section rows â”€â”€
+  // ── Section rows ──
   html += _LT+'table ' + S_TBL + _GT;
 
   // 1. YOUR PREDICTED NUMBERS
@@ -20107,7 +20190,7 @@ document.addEventListener('submit', function(evt) {
 });
 
 /**
- * mleToggleNoteEditor â€” show or hide the inline note editor for a saved settings card.
+ * mleToggleNoteEditor — show or hide the inline note editor for a saved settings card.
  * @param {number}  settingId - DB id of the saved settings row
  * @param {boolean} show      - true = open editor, false = close editor
  */
@@ -20124,7 +20207,7 @@ function mleToggleNoteEditor(settingId, show) {
 }
 
 /**
- * mleSaveNote â€” submit the note form via fetch so the page does not reload.
+ * mleSaveNote — submit the note form via fetch so the page does not reload.
  * Falls back to normal form submit if fetch is unavailable.
  * @param {Event}  evt       - form submit event
  * @param {number} settingId - DB id of the saved settings row
@@ -20163,7 +20246,7 @@ function mleSaveNote(evt, settingId) {
 }
 
 /**
- * mleApplyRecallSettings â€” "Use these settings" button handler.
+ * mleApplyRecallSettings — "Use these settings" button handler.
  * Stores the saved settings in sessionStorage under 'mle_recall_settings' so that the
  * SKAI page can read and apply them on load, then navigates to the lottery's SKAI page.
  * Falls back to the in-page CustomEvent approach (mylottoRecallSettings) if the user is
@@ -20205,14 +20288,14 @@ function mleApplyRecallSettings(btn, settingId, lotteryId) {
     return;
   }
 
-  // No destination URL â€” fall back to in-page fill (works if SKAI is on the same page)
+  // No destination URL — fall back to in-page fill (works if SKAI is on the same page)
   if (typeof mylottoRecallSettings === 'function') {
     mylottoRecallSettings(settingId, lotteryId, params);
   }
 }
 
 /**
- * mylottoRecallSettings â€” populate the active prediction form with a saved settings template.
+ * mylottoRecallSettings — populate the active prediction form with a saved settings template.
  * Dispatches a custom event 'mylotto:recall-settings' with the params payload so that any
  * page-level handler (Sky, AI, SKAI, etc.) can apply the values to its own form fields.
  * Falls back to a console notice if no handler is registered.
