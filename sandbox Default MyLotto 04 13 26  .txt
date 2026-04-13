@@ -3553,6 +3553,102 @@ if (MLE_DEMO_MODE) {
 @media (max-width:980px){.mle-onboard-kpi-row{grid-template-columns:1fr;}.mle-onboard-main-grid{grid-template-columns:1fr;}.mle-onboard-hero__right{align-items:flex-start;}}
 @media (max-width:640px){.mle-onboard-hero{padding:1rem 1rem 0.95rem;}.mle-onboard-hero__title{font-size:1.28rem;}.mle-onboard-kpi-row,.mle-onboard-main-grid{padding-left:1rem;padding-right:1rem;}.mle-onboard-progress-wrap{margin-left:1rem;margin-right:1rem;}.mle-onboard-kpi,.mle-onboard-feature-card{border-radius:15px;}.mle-onboard-step{padding:0.75rem 0.8rem;}}
 
+/* ── Start Here Strip ────────────────────────────────────────── */
+.mle-start-here{
+  margin:1.2rem 0 0.2rem;
+  border:1px solid #cfe0fb;
+  border-radius:20px;
+  background:linear-gradient(180deg,#f0f6ff 0%,#ffffff 100%);
+  box-shadow:0 8px 24px rgba(15,23,42,0.06);
+  overflow:hidden;
+}
+.mle-start-here__header{
+  display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;
+  padding:1.05rem 1.25rem 0.85rem;
+  border-bottom:1px solid #dbeafe;
+  background:linear-gradient(135deg,#0c1f42 0%,#0f3a8a 55%,#1c66ff 100%);
+}
+.mle-start-here__header-left{flex:1 1 auto;}
+.mle-start-here__eyebrow{
+  display:inline-block;margin-bottom:0.3rem;
+  font-size:0.69rem;font-weight:800;letter-spacing:0.11em;text-transform:uppercase;
+  color:rgba(255,255,255,0.72);
+}
+.mle-start-here__title{
+  margin:0 0 0.28rem;font-size:1.05rem;font-weight:800;line-height:1.2;
+  color:#ffffff;letter-spacing:-0.01em;
+}
+.mle-start-here__subtitle{
+  margin:0;font-size:0.88rem;line-height:1.6;
+  color:rgba(255,255,255,0.88);
+}
+.mle-start-here__badge{
+  flex:0 0 auto;align-self:flex-start;
+  margin-top:0.15rem;padding:0.3rem 0.7rem;
+  border-radius:999px;border:1px solid rgba(255,255,255,0.26);
+  background:rgba(255,255,255,0.12);
+  font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;
+  color:#ffffff;white-space:nowrap;
+}
+.mle-start-here__body{padding:1.05rem 1.25rem 1.1rem;}
+.mle-start-here__steps{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0.75rem;
+  margin-bottom:0.95rem;
+}
+.mle-start-here__step{
+  display:flex;align-items:flex-start;gap:0.7rem;
+  padding:0.85rem 0.9rem;
+  border:1px solid #dbe4f0;border-radius:15px;
+  background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+  box-shadow:0 4px 12px rgba(15,23,42,0.04);
+}
+.mle-start-here__step-num{
+  flex:0 0 auto;width:30px;height:30px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0f2a52 0%,#1c66ff 100%);
+  color:#ffffff;font-size:0.74rem;font-weight:800;
+  box-shadow:0 6px 14px rgba(28,102,255,0.20);
+}
+.mle-start-here__step-body strong{
+  display:block;margin-bottom:0.14rem;
+  font-size:0.89rem;font-weight:800;color:#0f172a;line-height:1.25;
+}
+.mle-start-here__step-body span{
+  display:block;font-size:0.82rem;color:#475569;line-height:1.55;
+}
+.mle-start-here__tip{
+  display:flex;align-items:flex-start;gap:0.7rem;
+  padding:0.8rem 1rem;
+  border:1px solid #bfd3f2;border-radius:14px;
+  background:linear-gradient(180deg,#eff6ff 0%,#f0f8ff 100%);
+  margin-bottom:0.7rem;
+}
+.mle-start-here__tip-icon{
+  flex:0 0 auto;font-size:1.05rem;line-height:1;margin-top:0.05rem;
+}
+.mle-start-here__tip-body strong{
+  display:block;margin-bottom:0.1rem;
+  font-size:0.82rem;font-weight:800;color:#1d4ed8;
+}
+.mle-start-here__tip-body span{
+  display:block;font-size:0.82rem;color:#1e3a6e;line-height:1.55;
+}
+.mle-start-here__advanced{
+  font-size:0.8rem;color:#64748b;line-height:1.6;
+  padding:0.6rem 0.85rem;
+  border:1px solid #e2e8f0;border-radius:12px;
+  background:#f8fafc;
+}
+.mle-start-here__advanced strong{color:#334155;}
+@media (max-width:860px){
+  .mle-start-here__steps{grid-template-columns:1fr;}
+}
+@media (max-width:640px){
+  .mle-start-here__header{padding:0.9rem 1rem 0.8rem;}
+  .mle-start-here__body{padding:0.9rem 1rem 0.95rem;}
+  .mle-start-here__title{font-size:0.98rem;}
+}
+
 /* ===== merged style section ===== */
 
 /* When info-card is not "open", hide its SKAI card body */
@@ -8085,6 +8181,64 @@ h3.title { font-size: 1.5rem; }
 
   </div>
 </div>
+
+<!-- ── Start Here: Onboarding Strip ────────────────────────────────────── -->
+<div class="mle-start-here" role="region" aria-label="How to use this workspace">
+
+  <div class="mle-start-here__header">
+    <div class="mle-start-here__header-left">
+      <div class="mle-start-here__eyebrow">Start Here</div>
+      <h3 class="mle-start-here__title">How to use this workspace</h3>
+      <p class="mle-start-here__subtitle">Review your lotteries, compare saved predictions, and decide what to run next — all in one place.</p>
+    </div>
+    <span class="mle-start-here__badge">Beginner-friendly</span>
+  </div>
+
+  <div class="mle-start-here__body">
+
+    <div class="mle-start-here__steps">
+
+      <div class="mle-start-here__step">
+        <div class="mle-start-here__step-num">1</div>
+        <div class="mle-start-here__step-body">
+          <strong>Choose a lottery</strong>
+          <span>Start with a lottery you play regularly. Your saved runs and results are grouped by lottery throughout this page.</span>
+        </div>
+      </div>
+
+      <div class="mle-start-here__step">
+        <div class="mle-start-here__step-num">2</div>
+        <div class="mle-start-here__step-body">
+          <strong>Review your saved predictions</strong>
+          <span>Scroll to your saved runs and check which methods appeared most often. Look for numbers that repeat across different prediction styles.</span>
+        </div>
+      </div>
+
+      <div class="mle-start-here__step">
+        <div class="mle-start-here__step-num">3</div>
+        <div class="mle-start-here__step-body">
+          <strong>Decide what to run next</strong>
+          <span>Use the Best Performing Setups and Focus Areas sections to see what worked. Repeat the strongest setup or adjust one variable at a time.</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mle-start-here__tip">
+      <div class="mle-start-here__tip-icon">&#x1F4A1;</div>
+      <div class="mle-start-here__tip-body">
+        <strong>Good place to start</strong>
+        <span>Begin with your favorite lotteries at the top, then check which prediction methods are appearing most often before creating a new run.</span>
+      </div>
+    </div>
+
+    <div class="mle-start-here__advanced">
+      <strong>For power users:</strong> once you know your usual lotteries and have a few saved runs, use the Ranking Performance, Setup Performance Review, and Draw Results Comparison panels further down to refine your decision process.
+    </div>
+
+  </div>
+</div>
+<!-- ── End Start Here Strip ────────────────────────────────────────────── -->
 
 <?php
 $__mleHistoryTarget = 20;
