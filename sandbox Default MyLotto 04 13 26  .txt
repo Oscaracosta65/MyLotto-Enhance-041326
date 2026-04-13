@@ -8049,15 +8049,15 @@ h3.title { font-size: 1.5rem; }
 
     <div class="skai-stack skai-stack--tight">
       <div class="skai-section__eyebrow">
-        Your Lotto Workspace
+        Your Prediction Workspace
       </div>
 
       <h2 class="skai-section__heading">
-        MyLottoExpert Main Workspace
+        MyLottoExpert
       </h2>
 
       <p class="skai-section__subtitle">
-        Use this page to review saved predictions, compare repeated signals, and decide your next move using your scored history.
+        Use this workspace to review your favorite lotteries, compare prediction methods, and decide what to run next.
       </p>
     </div>
 
@@ -8169,15 +8169,15 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
 
       <div class="mle-onboard-hero__content">
         <div class="mle-onboard-hero__left">
-          <div class="mle-onboard-hero__eyebrow">MyLottoExpert Strategy Briefing</div>
-          <h3 class="mle-onboard-hero__title">Turn saved predictions into a cleaner, smarter testing record</h3>
+          <div class="mle-onboard-hero__eyebrow">How your workspace works</div>
+          <h3 class="mle-onboard-hero__title">See what your predictions are showing — and decide what to do next</h3>
           <p class="mle-onboard-hero__subtitle">
-            This workspace is where your runs stop being isolated outputs and start becoming usable evidence. The objective is not to chase every result. It is to compare clearly, keep the strongest run for each draw, and build enough clean history for real trends to separate themselves from noise.
+            This is where your saved predictions become useful. Compare results across draws, see which methods are performing, keep the strongest runs, and build a clear picture over time.
           </p>
 
           <div class="mle-onboard-hero__chips">
             <span class="mle-onboard-chip mle-onboard-chip--gold">Truth-based</span>
-            <span class="mle-onboard-chip">Scientific narrowing</span>
+            <span class="mle-onboard-chip">Method comparison</span>
             <span class="mle-onboard-chip"><?php echo htmlspecialchars($__mleDrawLabel, ENT_QUOTES, 'UTF-8'); ?></span>
             <span class="mle-onboard-chip"><?php echo htmlspecialchars($__mleSettingsLabel, ENT_QUOTES, 'UTF-8'); ?></span>
             <span class="mle-onboard-chip"><?php echo htmlspecialchars($__mleSnapshotLotteriesLabel, ENT_QUOTES, 'UTF-8'); ?></span>
@@ -8201,7 +8201,7 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
       <div class="mle-onboard-progress-wrap">
         <div class="mle-onboard-progress__head">
           <div>
-            <div class="mle-onboard-progress__eyebrow">Progress toward meaningful history</div>
+            <div class="mle-onboard-progress__eyebrow">Your progress toward a clearer record</div>
             <div class="mle-onboard-progress__title"><?php echo htmlspecialchars($__mleDrawLabel, ENT_QUOTES, 'UTF-8'); ?></div>
           </div>
           <div class="mle-onboard-progress__pct"><?php echo (int)$__mleHistoryProgressPct; ?>%</div>
@@ -8223,7 +8223,7 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
           </div>
           <div class="mle-onboard-kpi__value"><?php echo (int)$__mleTrackedDrawCount; ?></div>
           <div class="mle-onboard-kpi__text">
-            Distinct draws currently represented in your saved record. This is the number that matters most for long-term trend visibility.
+            Completed draws you have a saved result for. This number grows as you keep tracking draws over time.
           </div>
         </div>
 
@@ -8234,7 +8234,7 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
           </div>
           <div class="mle-onboard-kpi__value"><?php echo (int)$__mleSavedPredictionCount; ?></div>
           <div class="mle-onboard-kpi__text">
-            Total prediction runs currently saved in the workspace. Keep the strongest one per draw so this does not become clutter.
+            Total saved prediction runs in your workspace. For best results, keep one run per draw.
           </div>
         </div>
 
@@ -8245,7 +8245,7 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
           </div>
           <div class="mle-onboard-kpi__value"><?php echo (int)$__mleSavedSettingsCount; ?></div>
           <div class="mle-onboard-kpi__text">
-            Configuration templates you have decided are worth keeping. Save selectively so only the stronger candidates remain easy to find.
+            Prediction setups you have saved for reuse. Save only the ones that consistently produce strong results.
           </div>
         </div>
       </div>
@@ -8255,8 +8255,8 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
         <div class="mle-onboard-feature-card mle-onboard-feature-card--primary">
           <div class="mle-onboard-feature-card__head">
             <div>
-              <div class="mle-onboard-feature-card__eyebrow">Recommended workflow</div>
-              <h4 class="mle-onboard-feature-card__title">How to use this workspace well</h4>
+              <div class="mle-onboard-feature-card__eyebrow">How to get the most from this page</div>
+              <h4 class="mle-onboard-feature-card__title">Five steps to a stronger record</h4>
             </div>
           </div>
 
@@ -8265,7 +8265,7 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
               <div class="mle-onboard-step__num">1</div>
               <div class="mle-onboard-step__body">
                 <strong>Start with a real batch</strong>
-                <span>Use SKAI or your preferred method and generate enough variation to compare intelligently.</span>
+                <span>Run predictions using SKAI or another method, and generate enough variety to compare results meaningfully.</span>
               </div>
             </div>
 
@@ -8273,7 +8273,7 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
               <div class="mle-onboard-step__num">2</div>
               <div class="mle-onboard-step__body">
                 <strong>Review the evidence, not just the excitement</strong>
-                <span>Look at overlap, method support, ranking behavior, and what multiple signals are showing together.</span>
+                <span>Focus on which numbers appear across multiple methods and which setups are ranking the drawn numbers highest.</span>
               </div>
             </div>
 
@@ -8306,7 +8306,7 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
         <div class="mle-onboard-side-stack">
 
           <div class="mle-onboard-feature-card">
-            <div class="mle-onboard-feature-card__eyebrow">Live workspace readout</div>
+            <div class="mle-onboard-feature-card__eyebrow">Your current progress</div>
             <h4 class="mle-onboard-feature-card__title"><?php echo htmlspecialchars($__mleHistoryStatus, ENT_QUOTES, 'UTF-8'); ?></h4>
 
             <div class="mle-onboard-insight-list">
@@ -8321,17 +8321,17 @@ if ($__mleTrackedDrawCount >= $__mleHistoryTarget) {
               </div>
 
               <div class="mle-onboard-insight">
-                <strong>Active scope</strong>
-                <span><?php echo htmlspecialchars($__mleSnapshotLotteriesLabel, ENT_QUOTES, 'UTF-8'); ?> and <?php echo htmlspecialchars($__mleSettingsLabel, ENT_QUOTES, 'UTF-8'); ?> currently available in this workspace.</span>
+                <strong>In your workspace now</strong>
+                <span><?php echo htmlspecialchars($__mleSnapshotLotteriesLabel, ENT_QUOTES, 'UTF-8'); ?> and <?php echo htmlspecialchars($__mleSettingsLabel, ENT_QUOTES, 'UTF-8'); ?> saved and ready to review.</span>
               </div>
             </div>
           </div>
 
           <div class="mle-onboard-feature-card mle-onboard-feature-card--accent">
-            <div class="mle-onboard-feature-card__eyebrow">Recommended mindset</div>
-            <h4 class="mle-onboard-feature-card__title">Do not judge the platform from one run alone</h4>
+            <div class="mle-onboard-feature-card__eyebrow">Worth keeping in mind</div>
+            <h4 class="mle-onboard-feature-card__title">One result is a starting point, not a conclusion</h4>
             <p class="mle-onboard-feature-card__text">
-              One run can be interesting. A clean history across many scored draws is where stronger patterns begin separating themselves from random variation. That is the standard this workspace is helping you build toward.
+              One run can give you useful information. A clean history across many scored draws is where stronger patterns begin separating themselves from noise. That is the standard this workspace helps you build toward.
             </p>
           </div>
 
@@ -11466,7 +11466,7 @@ usort($__intelligenceCards, function ($a, $b) {
   <div class="mle-decision-summary__header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
     <div>
       <div class="mle-decision-summary__eyebrow">What to focus on now</div>
-      <h2 class="mle-decision-summary__title">What to focus on now</h2>
+      <h2 class="mle-decision-summary__title">Your Focus Areas</h2>
       <p class="mle-decision-summary__subtitle">This section brings your saved history together so you can quickly see what is repeating, what is still early, and what deserves your attention next.</p>
     </div>
     <button type="button" class="prc-toggle-btn" id="mle-ci-toggle-all" aria-expanded="true">&#x25BC; Collapse all</button>
@@ -11485,12 +11485,12 @@ usort($__intelligenceCards, function ($a, $b) {
   </div>
   <div class="mle-decision-summary__grid" style="margin-bottom:1rem;">
     <div class="mle-summary-card">
-      <span class="mle-summary-card__label">Current focus</span>
+      <span class="mle-summary-card__label">Lotteries in review</span>
       <span class="mle-summary-card__value"><?php echo (int)$__intelligenceActiveLotteries; ?></span>
       <div class="mle-summary-card__text">How many lotteries are included in this summary.</div>
     </div>
     <div class="mle-summary-card">
-      <span class="mle-summary-card__label">Saved results reviewed</span>
+      <span class="mle-summary-card__label">Total saved results</span>
       <span class="mle-summary-card__value"><?php echo (int)$__intelligenceTotalRuns; ?></span>
       <div class="mle-summary-card__text">All saved results included in this summary.</div>
     </div>
@@ -11708,21 +11708,21 @@ foreach ($bestOpps as $__sopp) {
 
 <div id="skai-global-snapshot" class="skai-global-snapshot" aria-label="Best settings snapshot" role="region">
   <div class="skai-bss-header">
-    <h2 class="skai-bss-title">Best Setup Snapshot</h2>
-    <p class="mle-section-explainer"><strong>Plain meaning:</strong> This section shows which saved setup has performed best so far for each lottery, based on your completed-draw history.</p>
-    <p class="skai-bss-subtitle">Use this section to see the strongest result, how much history supports it, and which setup may be worth using again.</p>
+    <h2 class="skai-bss-title">Your Best Performing Setups</h2>
+    <p class="mle-section-explainer">Which saved setup has performed best for each lottery, based on your completed-draw history.</p>
+    <p class="skai-bss-subtitle">Review which setup scored highest across draws, and consider using it again for the next run.</p>
   </div>
   <div class="skai-snapshot-grid">
     <div class="skai-snapshot-metric">
-      <div class="skai-snapshot-label">Active Lotteries</div>
+      <div class="skai-snapshot-label">Lotteries tracked</div>
       <div class="skai-snapshot-value"><?php echo (int)$__snapTotalLotteries; ?></div>
     </div>
     <div class="skai-snapshot-metric">
-      <div class="skai-snapshot-label">With Scored History</div>
+      <div class="skai-snapshot-label">With completed-draw history</div>
       <div class="skai-snapshot-value"><?php echo (int)$__snapScoredLotteries; ?></div>
     </div>
     <div class="skai-snapshot-metric">
-      <div class="skai-snapshot-label">Total Scored Runs</div>
+      <div class="skai-snapshot-label">Predictions scored</div>
       <div class="skai-snapshot-value"><?php echo (int)$__snapTotalScoredRuns; ?></div>
     </div>
   </div>
@@ -11782,10 +11782,10 @@ foreach ($bestOpps as $__sopp) {
         <?php if ($__snapRunId > 0): ?>
           <button type="button" class="skai-bss-view-btn"
                    data-jump-run-id="<?php echo $__snapRunId; ?>"
-                   data-jump-lottery-id="<?php echo (int)$__sid; ?>">View best</button>
+                   data-jump-lottery-id="<?php echo (int)$__sid; ?>">View this setup</button>
         <?php endif; ?>
         <button type="button" class="skai-bss-all-link"
-                 data-jump-crr-id="<?php echo (int)$__sid; ?>">All runs</button>
+                 data-jump-crr-id="<?php echo (int)$__sid; ?>">See all runs</button>
       </div>
     </div>
   <?php endforeach; ?>
@@ -11799,13 +11799,13 @@ foreach ($bestOpps as $__sopp) {
      ============================================================ -->
 
 <?php if (!empty($__runSummary)): ?>
-<div class="mle-section-explainer"><strong>Completed draw review:</strong> This section compares every saved run with the actual results so you can see which methods, modes, and templates performed best after the draw.</div>
+<div class="mle-section-explainer">Each group below shows your saved predictions next to the actual draw results. Use this to see which methods and setups matched the most numbers after the draw.</div>
 <div id="mle-historical-validation-wrap" class="prc-wrap" aria-label="Prediction results comparison" role="region">
 
   <div style="display:-webkit-flex;display:flex;-webkit-align-items:flex-start;align-items:flex-start;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:6px 12px;margin-bottom:10px;">
     <div style="display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:8px;">
-      <h2 style="font-size:1rem;font-weight:800;color:#1e293b;margin:0;">Completed Draw results by Date</h2>
-      <span style="font-size:0.78rem;color:#64748b;">Use this table to check which saved runs led to real results after the draw. Runs are ordered by total hits first, then by how high the matching numbers were ranked in that prediction.</span>
+      <h2 style="font-size:1rem;font-weight:800;color:#1e293b;margin:0;">Draw Results Comparison</h2>
+      <span style="font-size:0.78rem;color:#64748b;">See which saved runs matched real results after the draw. Runs are ordered by total hits first, then by how high the matching numbers ranked in that prediction.</span>
     </div>
     <div class="prc-legend" role="note" aria-label="Row highlight legend">
       <span class="prc-legend-title">Row highlight:</span>
@@ -11815,7 +11815,7 @@ foreach ($bestOpps as $__sopp) {
 
   <div style="display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:8px;margin:0 0 12px 0;">
     <button type="button" class="btn-secondary" style="padding:0.4rem 0.85rem;font-size:0.82rem;white-space:nowrap;" id="mle-print-historical-all">
-      Print All Completed Draw results
+      Print all draw results
     </button>
   </div>
 
@@ -12125,7 +12125,7 @@ foreach ($bestOpps as $__sopp) {
 
 <div class="mle-section-label" style="margin:1.5rem 0 1rem; padding:0 0.25rem;">
   <h2 style="font-size:1.1rem; font-weight:800; color:#1e293b; margin:0 0 0.35rem;">Your saved predictions</h2>
-  <p style="font-size:0.9rem; color:#475569; margin:0; line-height:1.55;">Each card shows a full set of numbers saved for an upcoming or completed draw. Select methods to compare overlap, review hit rates, and identify which configurations performed best against real draw results.</p>
+  <p style="font-size:0.9rem; color:#475569; margin:0; line-height:1.55;">Each card shows numbers you saved for a specific draw. Select multiple runs to compare overlap, see which methods agreed, and review which setups performed best against real results.</p>
 </div>
 
 <!-- Legend will appear after first prediction group via JavaScript -->
@@ -12164,7 +12164,7 @@ foreach ($bestOpps as $__sopp) {
 
   <div class="toolbar-group toolbar-group-archive">
     <div class="toolbar-caption">
-      Archive
+      Manage
     </div>
 
     <form
@@ -12663,9 +12663,9 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
 
     <!-- A. Hero Strip -->
     <div class="skai-ov-hero">
-      <div class="skai-ov-hero-label">Current draw support</div>
-      <div class="skai-ov-hero-title">What looks most useful for the next draw</div>
-      <div class="skai-ov-hero-sub">Use this area to review agreement signals, build a number pool, and decide what deserves attention now. This is your action-focused workspace for the upcoming draw.</div>
+      <div class="skai-ov-hero-label">Before the next draw</div>
+      <div class="skai-ov-hero-title">Your signals for the upcoming draw</div>
+      <div class="skai-ov-hero-sub">Review which numbers appear across multiple methods, build a shortlist, and decide what is worth playing. This section updates as you select runs.</div>
     </div>
 
     <!-- B. KPI Signal Row -->
@@ -13062,8 +13062,8 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
 
     <!-- A. Hero Strip (data-aware copy) -->
     <div class="skai-ov-hero">
-      <div class="skai-ov-hero-label">Overview</div>
-      <div class="skai-ov-hero-title">Draw learning summary</div>
+      <div class="skai-ov-hero-label">After the draw</div>
+      <div class="skai-ov-hero-title">How your predictions scored</div>
       <div class="skai-ov-hero-sub"><?php echo $__postHeroSub; ?></div>
     </div>
 
@@ -13150,8 +13150,8 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
     <!-- C2. What this result means Zone (JS narrative populates [data-narrative]) -->
     <div class="skai-ov-narrative-zone">
       <div class="skai-ov-narrative-header">
-        <div class="skai-ov-zone-eyebrow">What this result means</div>
-        <div class="skai-ov-zone-title">What this draw shows about method agreement</div>
+        <div class="skai-ov-zone-eyebrow">Result summary</div>
+        <div class="skai-ov-zone-title">How your predictions compared against this draw</div>
       </div>
       <div class="sdi-narrative-card narrative-card"
             data-mode="<?php echo htmlspecialchars($__mode, ENT_QUOTES); ?>">
@@ -13679,17 +13679,17 @@ $methodKeys = ['skip_hit','ai_prediction','mcmc_prediction','skai_prediction','h
     ===================================================== -->
     <div class="skai-ci-module">
       <div class="skai-ci-header">
-        <div class="skai-ci-eyebrow">Setting intelligence</div>
-        <div class="skai-ci-title">What to focus on now</div>
-        <div class="skai-ci-sub">This section identifies which settings families have shown the most consistent early-rank placement across completed draws  -  and suggests one disciplined next variable to test.</div>
+        <div class="skai-ci-eyebrow">Setup performance review</div>
+        <div class="skai-ci-title">Which setups are worth repeating</div>
+        <div class="skai-ci-sub">This section shows which prediction setups have placed the drawn numbers highest across completed draws, and suggests one thing to adjust for the next run.</div>
       </div>
       <div class="skai-ci-body">
 
         <?php if (!$__ciHasEnoughData): ?>
         <!-- Not enough data state -->
         <div class="skai-ci-empty">
-          <div class="skai-ci-empty-title">Not enough completed-draw history yet</div>
-          <div class="skai-ci-empty-text">This setting review needs at least 3 completed and scored prediction runs for <?php echo htmlspecialchars((string)($g['lottery_name'] ?? 'this lottery'), ENT_QUOTES); ?>. Save and score more runs across future draws to unlock this analysis.</div>
+          <div class="skai-ci-empty-title">Still building history for this lottery</div>
+          <div class="skai-ci-empty-text">This section needs at least 3 completed and scored prediction runs for <?php echo htmlspecialchars((string)($g['lottery_name'] ?? 'this lottery'), ENT_QUOTES); ?>. Keep saving runs across upcoming draws and this analysis will unlock automatically.</div>
         </div>
 
         <?php else: ?>
@@ -14877,10 +14877,9 @@ $__lpFmtRankColor = function($v) {
   <!-- Header + overall status badge -->
   <div class="skai-lp-header">
     <div class="skai-lp-header-left">
-      <h3 class="skai-lp-title">&#x1F4CA; Learning performance</h3>
+      <h3 class="skai-lp-title">&#x1F4CA; Ranking Performance</h3>
       <p class="skai-lp-subtitle">
-        Measures whether SKAI's ranked predictions are improving over time by tracking
-        where actual winning numbers appear in the prediction list.
+        Tracks how well your saved predictions ranked the actual winning numbers. Lower average rank means the drawn numbers appeared higher in your prediction list.
       </p>
     </div>
     <span class="skai-lp-status <?php echo htmlspecialchars($__lpGroupCard['class'], ENT_QUOTES); ?>">
@@ -14892,9 +14891,9 @@ $__lpFmtRankColor = function($v) {
   <!-- ── Empty state ───────────────────────────────────────────────────── -->
   <div class="skai-lp-empty">
     <span class="skai-lp-empty-icon">&#x1F52D;</span>
-    <strong>No validated runs yet</strong><br>
+    <strong>No results scored yet</strong><br>
     Performance data is recorded automatically once an actual draw result is available
-    for one of your saved prediction runs. Check back after the next draw.
+    for one of your saved prediction runs. Check back after the next draw is completed.
   </div>
 
   <?php else: ?>
@@ -14929,7 +14928,7 @@ $__lpFmtRankColor = function($v) {
   <!-- ── Rolling Average KPI strip (system overview) ───────────────────── -->
   <div class="skai-lp-kpi-row" style="padding-bottom:0.5rem;">
     <div class="skai-lp-kpi-tile">
-      <div class="skai-lp-kpi-tile-label">Recent 10-run avg rank</div>
+      <div class="skai-lp-kpi-tile-label">Last 10 runs avg rank</div>
       <div class="skai-lp-kpi-tile-value <?php
         $__lpV = $__lpGroupTrend['last10_avg'];
         echo ($__lpV !== null && $__lpV <= 10) ? 'skai-lp-kpi-tile-value--good' : (($__lpV !== null && $__lpV <= 20) ? '' : 'skai-lp-kpi-tile-value--neutral');
@@ -14938,7 +14937,7 @@ $__lpFmtRankColor = function($v) {
       </div>
     </div>
     <div class="skai-lp-kpi-tile">
-      <div class="skai-lp-kpi-tile-label">Recent 25-run avg rank</div>
+      <div class="skai-lp-kpi-tile-label">Last 25 runs avg rank</div>
       <div class="skai-lp-kpi-tile-value"><?php echo $__lpFmtNum($__lpGroupTrend['last25_avg']); ?></div>
     </div>
     <div class="skai-lp-kpi-tile">
@@ -14951,9 +14950,9 @@ $__lpFmtRankColor = function($v) {
     </div>
   </div>
   <div style="margin:0.25rem 0 0.85rem; color:#475569; font-size:0.84rem; line-height:1.55;">
-    <strong>How to read these:</strong> the rank numbers show where the real winning numbers appeared in the prediction list.
-    <strong>Lower is better.</strong> “Recent 10-run avg rank” uses your newest 10 scored runs.
-    “Recent 25-run avg rank” uses your newest 25 scored runs. “All-run avg rank” uses every scored run for this lottery.
+    <strong>How to read these:</strong> these numbers show where the actual winning numbers appeared in your prediction list.
+    <strong>Lower is better.</strong> “Last 10 runs” uses your newest 10 scored runs.
+    “Last 25 runs” uses your newest 25. “All-run avg” uses every scored run for this lottery.
   </div>
 
   <hr class="skai-lp-divider">
@@ -14973,9 +14972,9 @@ $__lpFmtRankColor = function($v) {
     <div class="skai-lp-split-card skai-lp-split-card--sys">
       <div class="skai-lp-split-card-title">
         <span class="skai-lp-split-card-title-icon">&#x1F4CA;</span>
-        Best ranking setup example
+        Top Setup by Ranking Quality
       </div>
-      <p class="skai-lp-split-card-desc">Shows the saved run that produced the strongest overall ranking quality, plus the training style, same-setting trend, and comparison chart for that setup.</p>
+      <p class="skai-lp-split-card-desc">The saved run that placed the drawn numbers highest in the prediction list, plus training style and same-setup trend.</p>
       <?php if ($__lpBestSystem !== null): ?>
       <?php if ($__lpBestSystem['run_setting_label'] !== ''): ?>
       <div class="skai-lp-run-setting-badge">
@@ -15029,9 +15028,9 @@ $__lpFmtRankColor = function($v) {
     <div class="skai-lp-split-card skai-lp-split-card--opp">
       <div class="skai-lp-split-card-title">
         <span class="skai-lp-split-card-title-icon">&#x1F3AF;</span>
-        Best hit setup example
+        Top Setup by Hit Count
       </div>
-      <p class="skai-lp-split-card-desc">Shows the saved run that produced the strongest hit result, plus the training style, same-setting trend, and comparison chart for that setup.</p>
+      <p class="skai-lp-split-card-desc">The saved run that matched the most actual drawn numbers, plus training style and same-setup trend.</p>
       <?php if ($__lpBestHit !== null): ?>
       <?php if ($__lpBestHit['run_setting_label'] !== ''): ?>
       <div class="skai-lp-run-setting-badge skai-lp-run-setting-badge--green">
@@ -15085,9 +15084,9 @@ $__lpFmtRankColor = function($v) {
     <div class="skai-lp-split-card skai-lp-split-card--rec">
       <div class="skai-lp-split-card-title">
         <span class="skai-lp-split-card-title-icon">&#x1F4CC;</span>
-        Recommended run
+        Suggested Next Setup
       </div>
-      <p class="skai-lp-split-card-desc">The saved run that performed best across both ranking quality and hit coverage, plus the training style and same-setting trend for that setup.</p>
+      <p class="skai-lp-split-card-desc">The saved run that balanced ranking quality and hit coverage best. A good starting point for your next prediction.</p>
       <?php if ($__lpRecommended !== null): ?>
       <?php if ($__lpRecommended['run_setting_label'] !== ''): ?>
       <div class="skai-lp-run-setting-badge skai-lp-run-setting-badge--purple">
@@ -15248,8 +15247,8 @@ $__lpFmtRankColor = function($v) {
       </summary>
       <!-- Legend -->
       <div class="skai-lp-tbl-legend">
-        <span class="lp-run-badge lp-run-badge--sys">Rank best</span> Best ranking quality &nbsp;&bull;&nbsp;
-        <span class="lp-run-badge lp-run-badge--hit">Hit best</span> Best hit performance &nbsp;&bull;&nbsp;
+        <span class="lp-run-badge lp-run-badge--sys">Rank best</span> Strongest ranking quality &nbsp;&bull;&nbsp;
+        <span class="lp-run-badge lp-run-badge--hit">Hit best</span> Strongest hit rate &nbsp;&bull;&nbsp;
         <span class="lp-run-badge lp-run-badge--rec">Rec</span> Recommended &nbsp;&bull;&nbsp;
         &#x1F534; Worst overall rank
       </div>
