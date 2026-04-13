@@ -9679,6 +9679,175 @@ function mylottoexpertExtractDailySavedView($row)
 }
 
 /**
+ * Score a completed run for ranking in the Draw Results Comparison table.
+ *
+ * Returns an array of metrics used by mylottoexpertCompareCompletedRuns():
+ *   total_hits            – main_hits + extra_hits (primary sort key)
+ *   main_hits             – matched main numbers
+ *   extra_hits            – matched extra/bonus numbers
+ *   successful_combo_count – how many predicted combo lines produced ≥1 hit
+ *                            (only meaningful when multiple combos are stored)
+ *   combo_quality_score   – aggregate strength across all combo lines
+ *                            (main hit × 100) + (extra hit × 25) per combo
+ *   pos_sum               – sum of 1-based pred_main positions that matched
+ *   run_id                – used as final fallback tiebreak (higher = newer)
+ *
+ * Daily lotteries: evaluates every entry in pred_combo_strings.
+ * Regular lotteries: uses pred_main / pred_extra_all (single effective line).
+ * Unscored runs (has_draw = false) receive all-zero metrics except run_id.
+ */
+function mylottoexpertScoreCompletedRun(array $run): array
+{
+    $metrics = array(
+        'total_hits'             => 0,
+        'main_hits'              => 0,
+        'extra_hits'             => 0,
+        'successful_combo_count' => 0,
+        'combo_quality_score'    => 0,
+        'pos_sum'                => (int)($run['pos_sum'] ?? 0),
+        'run_id'                 => (int)($run['run_id'] ?? 0),
+    );
+
+    if (empty($run['has_draw'])) {
+        return $metrics;
+    }
+
+    $actualMain  = array_map('intval', (array)($run['actual_main']  ?? array()));
+    $actualExtra = array_map('intval', (array)($run['actual_extra'] ?? array()));
+
+    $isDaily       = !empty($run['is_daily']);
+    $comboStrings  = (array)($run['pred_combo_strings'] ?? array());
+
+    if ($isDaily && !empty($comboStrings) && !empty($actualMain)) {
+        // ── Daily lottery: evaluate every predicted combo line ──────────────
+        $drawDigitsBase = array_values($actualMain); // digits, may include 0
+
+        $bestMainHits  = 0;
+        $bestExtraHits = 0;
+
+        foreach ($comboStrings as $cs) {
+            $cs = (string)$cs;
+            if ($cs === '') { continue; }
+
+            $comboDigits = mylottoexpertDigitStringToArray($cs);
+            if (empty($comboDigits)) { continue; }
+
+            // Count digit overlap (consume each draw digit once, order-independent)
+            $comboMainHits  = 0;
+            $remaining = $drawDigitsBase;
+            foreach ($comboDigits as $cd) {
+                $idx = array_search((int)$cd, $remaining, true);
+                if ($idx !== false) {
+                    $comboMainHits++;
+                    unset($remaining[$idx]);
+                    $remaining = array_values($remaining);
+                }
+            }
+
+            // Extra hits for this combo line (extra digits stored in pred_extra_all)
+            $comboExtraHits = 0;
+            $predExtraAll = array_map('intval', (array)($run['pred_extra_all'] ?? array()));
+            foreach ($predExtraAll as $pev) {
+                if ($pev > 0 && in_array($pev, $actualExtra, true)) {
+                    $comboExtraHits = 1;
+                    break;
+                }
+            }
+
+            $comboTotal = $comboMainHits + $comboExtraHits;
+
+            if ($comboMainHits > $bestMainHits
+                || ($comboMainHits === $bestMainHits && $comboExtraHits > $bestExtraHits)) {
+                $bestMainHits  = $comboMainHits;
+                $bestExtraHits = $comboExtraHits;
+            }
+
+            // A combo counts as "successful" if it has at least 1 hit
+            if ($comboTotal >= 1) {
+                $metrics['successful_combo_count']++;
+            }
+
+            // Aggregate quality: main hits weighted heavily, extra adds value
+            $metrics['combo_quality_score'] += ($comboMainHits * 100) + ($comboExtraHits * 25);
+        }
+
+        $metrics['main_hits']  = $bestMainHits;
+        $metrics['extra_hits'] = $bestExtraHits;
+        $metrics['total_hits'] = $bestMainHits + $bestExtraHits;
+
+    } else {
+        // ── Regular lottery or daily with no combo strings ─────────────────
+        $mainHits  = (int)($run['hits_main']  ?? 0);
+        $extraHits = (int)($run['hits_extra'] ?? 0);
+
+        $metrics['main_hits']  = $mainHits;
+        $metrics['extra_hits'] = $extraHits;
+        $metrics['total_hits'] = $mainHits + $extraHits;
+
+        // Single-line "combo coverage": if there is at least one hit, count it
+        if (($mainHits + $extraHits) >= 1) {
+            $metrics['successful_combo_count'] = 1;
+        }
+        $metrics['combo_quality_score'] = ($mainHits * 100) + ($extraHits * 25);
+    }
+
+    return $metrics;
+}
+
+/**
+ * Shared comparator for completed scored runs (usort / best-run selection).
+ *
+ * Ranking model (highest priority first):
+ *   1. Higher TOTAL HITS wins
+ *   2. Higher MAIN HITS wins
+ *   3. Higher EXTRA HITS wins
+ *   4. Higher SUCCESSFUL COMBO COUNT wins (more tickets contributed)
+ *   5. Higher COMBO QUALITY SCORE wins (aggregate hit strength)
+ *   6. Lower POS_SUM wins (matched numbers appeared higher in ranked prediction)
+ *   7. Higher RUN_ID wins (newer run as final fallback)
+ *
+ * Returns negative if $a ranks above $b, positive if $b ranks above $a.
+ * Unscored runs (has_draw false) always sort below scored ones.
+ */
+function mylottoexpertCompareCompletedRuns(array $a, array $b): int
+{
+    // Scored before unscored
+    $aScored = !empty($a['has_draw']) ? 1 : 0;
+    $bScored = !empty($b['has_draw']) ? 1 : 0;
+    if ($aScored !== $bScored) { return $bScored - $aScored; }
+
+    if (!$aScored) {
+        // Both unscored: sort by draw_date desc, then run_id desc
+        $dateCmp = strcmp((string)$b['draw_date'], (string)$a['draw_date']);
+        if ($dateCmp !== 0) { return $dateCmp; }
+        return (int)$b['run_id'] - (int)$a['run_id'];
+    }
+
+    // Both scored: apply full 7-tier model
+    $mA = mylottoexpertScoreCompletedRun($a);
+    $mB = mylottoexpertScoreCompletedRun($b);
+
+    // 1. Total hits
+    if ($mA['total_hits'] !== $mB['total_hits']) { return $mB['total_hits'] - $mA['total_hits']; }
+    // 2. Main hits
+    if ($mA['main_hits'] !== $mB['main_hits']) { return $mB['main_hits'] - $mA['main_hits']; }
+    // 3. Extra hits
+    if ($mA['extra_hits'] !== $mB['extra_hits']) { return $mB['extra_hits'] - $mA['extra_hits']; }
+    // 4. Successful combo count (more tickets contributed to the win)
+    if ($mA['successful_combo_count'] !== $mB['successful_combo_count']) {
+        return $mB['successful_combo_count'] - $mA['successful_combo_count'];
+    }
+    // 5. Combo quality score (aggregate strength)
+    if ($mA['combo_quality_score'] !== $mB['combo_quality_score']) {
+        return $mB['combo_quality_score'] - $mA['combo_quality_score'];
+    }
+    // 6. Lower pos_sum = matched numbers were predicted as more likely
+    if ($mA['pos_sum'] !== $mB['pos_sum']) { return $mA['pos_sum'] - $mB['pos_sum']; }
+    // 7. Higher run_id (newer) wins
+    return $mB['run_id'] - $mA['run_id'];
+}
+
+/**
  * Map a US state/territory name → USPS abbreviation (uppercase).
  * Falls back to first two letters if unknown. Input may be mixed case.
  */
@@ -11096,14 +11265,42 @@ foreach ($groups as $__gKey => $__g) {
                 if (isset($__hitLookup[$__pn])) { $__posSum += ($__pi + 1); }
             }
         }
-        // Update best run: primary = most hits, tiebreak = lowest pos_sum (better-ranked matches).
-        $__curBestHits   = $__runSummary[$__lid]['max_hits'];
-        $__curBestPosSum = $__runSummary[$__lid]['best_pos_sum'];
-        if ($__totalHits > $__curBestHits
-            || ($__totalHits === $__curBestHits && $__posSum < $__curBestPosSum)) {
+        // Update best run using the shared 7-tier comparator.
+        // Build a minimal run array for the comparator before the full row is appended.
+        $__candidateRun = array(
+            'run_id'             => $__rid,
+            'draw_date'          => (string)($__g['draw_date'] ?? ''),
+            'has_draw'           => ($__scored !== null),
+            'hits_main'          => $__mainHits,
+            'hits_extra'         => $__extraHits,
+            'is_daily'           => $__isDailyPr,
+            'pred_combo_strings' => $__predComboStrings,
+            'pred_extra_all'     => $__predExtraAll,
+            'actual_main'        => $__actualMain,
+            'actual_extra'       => $__actualExtra,
+            'pos_sum'            => $__posSum,
+        );
+        $__curBestRid = $__runSummary[$__lid]['best_run_id'];
+        if ($__curBestRid === 0) {
+            // First run for this lottery
             $__runSummary[$__lid]['max_hits']     = $__totalHits;
             $__runSummary[$__lid]['best_run_id']  = $__rid;
             $__runSummary[$__lid]['best_pos_sum'] = $__posSum;
+        } else {
+            // Find current best row in the runs array to compare
+            $__curBestRow = null;
+            foreach ($__runSummary[$__lid]['runs'] as $__existingRun) {
+                if ((int)$__existingRun['run_id'] === $__curBestRid) {
+                    $__curBestRow = $__existingRun;
+                    break;
+                }
+            }
+            if ($__curBestRow !== null
+                && mylottoexpertCompareCompletedRuns($__candidateRun, $__curBestRow) < 0) {
+                $__runSummary[$__lid]['max_hits']     = $__totalHits;
+                $__runSummary[$__lid]['best_run_id']  = $__rid;
+                $__runSummary[$__lid]['best_pos_sum'] = $__posSum;
+            }
         }
         $__runSummary[$__lid]['runs'][] = array(
             'run_id'         => $__rid,
@@ -11127,26 +11324,12 @@ foreach ($groups as $__gKey => $__g) {
     }
 }
 
-// Sort each lottery's runs: total hits desc, then sum of predicted main numbers desc (ties favour higher numbers),
-// then by draw_date desc. After sorting, compute per-date bests and method-agreement sets.
+// Sort each lottery's runs using the shared 7-tier comparator:
+// total hits → main hits → extra hits → successful combo count →
+// combo quality score → pos_sum → run_id (newest last-resort tiebreak).
+// Unscored rows are always placed below scored rows.
 foreach ($__runSummary as $__lid => &$__lsRef) {
-    usort($__lsRef['runs'], function ($a, $b) {
-        // Scored results before unscored
-        if ($a['has_draw'] !== $b['has_draw']) {
-            return $a['has_draw'] ? -1 : 1;
-        }
-        if ($a['has_draw']) {
-            $aT = (int)$a['hits_main'] + (int)$a['hits_extra'];
-            $bT = (int)$b['hits_main'] + (int)$b['hits_extra'];
-            if ($aT !== $bT) { return $bT - $aT; }
-            // Tiebreak: lower pos_sum = matched numbers were ranked higher as "most likely"
-            $aP = (int)$a['pos_sum'];
-            $bP = (int)$b['pos_sum'];
-            if ($aP !== $bP) { return $aP - $bP; }
-        }
-        return strcmp((string)$b['draw_date'], (string)$a['draw_date']);
-    });
-
+    usort($__lsRef['runs'], 'mylottoexpertCompareCompletedRuns');
 }
 unset($__lsRef);
 
@@ -11334,8 +11517,9 @@ foreach ($__runSummary as $__lpLid => $__lpLottery) {
 unset($__lpLottery, $__lpRun, $__lpMetrics, $__lpData);
 
 
-// PRL uses: primary = most total hits (main+extra), tiebreak = lowest pos_sum.
-// This ensures both sections always show the same run as 'best'.
+// PRL uses the shared 7-tier ranking model: total hits → main hits → extra hits →
+// successful combo count → combo quality score → pos_sum → run_id.
+// This ensures both the "best" highlight and the sort order always agree.
 foreach ($__runSummary as $__rscLid => $__rscLsData) {
     if (!isset($bestOpps[$__rscLid]['best_avg_hits'])) { continue; }
     $__rscBestRid = (int)$__rscLsData['best_run_id'];
@@ -11959,11 +12143,11 @@ foreach ($bestOpps as $__sopp) {
   <div style="display:-webkit-flex;display:flex;-webkit-align-items:flex-start;align-items:flex-start;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:6px 12px;margin-bottom:10px;">
     <div style="display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:8px;">
       <h2 style="font-size:1rem;font-weight:800;color:#1e293b;margin:0;">Draw Results Comparison</h2>
-      <span style="font-size:0.78rem;color:#64748b;">See which saved runs matched real results after the draw. Runs are ordered by total hits first, then by how high the matching numbers ranked in that prediction.</span>
+      <span style="font-size:0.78rem;color:#64748b;">See which saved runs matched real results after the draw. Runs are ordered by total hits first, then by ticket coverage, combo quality, and the ranking position of matched numbers.</span>
     </div>
     <div class="prc-legend" role="note" aria-label="Row highlight legend">
       <span class="prc-legend-title">Row highlight:</span>
-      <span class="prc-legend-swatch prc-legend-best">&#x1F3C6; Overall best - highest total hits, with ties broken by the rank position of the matched numbers</span>
+      <span class="prc-legend-swatch prc-legend-best">&#x1F3C6; Overall best — highest total hits, then strongest ticket coverage, then strongest combo quality, then earliest ranked matches</span>
     </div>
   </div>
 
