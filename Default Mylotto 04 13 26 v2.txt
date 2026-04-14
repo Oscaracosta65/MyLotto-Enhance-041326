@@ -2521,8 +2521,8 @@ if (!skaiMigratePerformanceTableKeys($db)) {
 // New Features toggle (persisted in #__user_profiles)
 // Stored as '1' (show) / '0' (hide).
 // We can safely call helpers before their textual definition (PHP parses file first).
-$showNewFeatures = ((int) $user->id > 0)
-    ? (mylottoexpertGetUserPref($db, (int) $user->id, 'showNewFeatures', '1') === '1')
+$showNewFeatures = ($workspaceUserId > 0)
+    ? (mylottoexpertGetUserPref($db, $workspaceUserId, 'showNewFeatures', '1') === '1')
     : true;
 // Allow POST toggle via form
 if (!MLE_DEMO_MODE && $app->input->getMethod() === 'POST' && $app->input->post->get('toggle_new_features', '', 'STRING') !== '') {    if (!\Joomla\CMS\Session\Session::checkToken('post')) {
@@ -2531,14 +2531,14 @@ if (!MLE_DEMO_MODE && $app->input->getMethod() === 'POST' && $app->input->post->
         exit;
     }
     $newVal = $app->input->post->get('new_features_enabled', '0', 'STRING') === '1' ? '1' : '0';
-    mylottoexpertSetUserPref($db, (int) $user->id, 'showNewFeatures', $newVal);
+    mylottoexpertSetUserPref($db, $workspaceUserId, 'showNewFeatures', $newVal);
     $showNewFeatures = ($newVal === '1');
 }
 // --------------------------------------------------
 // Prediction List: Recency Sort Preference (persisted in #__user_profiles)
 // --------------------------------------------------
-$predSortPref = ((int) $user->id > 0)
-    ? mylottoexpertGetUserPref($db, (int) $user->id, 'predSort', 'desc')
+$predSortPref = ($workspaceUserId > 0)
+    ? mylottoexpertGetUserPref($db, $workspaceUserId, 'predSort', 'desc')
     : 'desc'; // 'desc' = newest→oldest (default)
 $predSortDir  = (strtolower($predSortPref) === 'asc') ? 'ASC' : 'DESC';
 
@@ -2837,7 +2837,7 @@ if ($id > 0) {
                 ->insert($db->quoteName('#__user_saved_settings'))
                 ->columns(['user_id', 'lottery_id', 'source', 'setting_name', 'params'])
                 ->values(implode(',', [
-                    (int) $user->id,
+                    $workspaceUserId,
                     $lotteryId,
                     $db->quote($source),
                     $db->quote($settingName),
@@ -2874,7 +2874,7 @@ if ($id > 0) {
     // Save Strategy Set (from Overview PRE-DRAW workspace)
     if ($app->input->post->getInt('save_strategy_set', 0) > 0) {
         // Require authenticated user
-        if ($user->guest || (int) $user->id <= 0) {
+        if ($user->guest || $workspaceUserId <= 0) {
             $app->enqueueMessage('You must be logged in to save a strategy set.', 'error');
             $app->redirect(\Joomla\CMS\Uri\Uri::getInstance()->toString());
             exit;
